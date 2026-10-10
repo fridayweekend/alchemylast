@@ -5,6 +5,7 @@ import '../../theme.dart';
 import '../../widgets.dart'; // InfoCard
 import '../../widgets/lms/course_card.dart';
 import '../../widgets/lms/progress_bar_card.dart';
+import '../../shared/auth_prototype_store.dart';
 
 class TrainerDashboardScreen extends StatelessWidget {
   const TrainerDashboardScreen({super.key});
@@ -17,10 +18,26 @@ class TrainerDashboardScreen extends StatelessWidget {
   ];
 
   static const _materials = [
-    (Icons.play_circle_outline, 'Introduction to Emotional Intelligence', 'Video · Module 1'),
-    (Icons.picture_as_pdf_outlined, 'Self-Awareness Workbook', 'PDF · Module 2'),
-    (Icons.slideshow_outlined, 'Emotional Regulation Slides', 'Presentation · Module 3'),
-    (Icons.headphones_outlined, 'Guided Breathing Exercise', 'Audio · Module 3'),
+    (
+      Icons.play_circle_outline,
+      'Introduction to Emotional Intelligence',
+      'Video · Module 1',
+    ),
+    (
+      Icons.picture_as_pdf_outlined,
+      'Self-Awareness Workbook',
+      'PDF · Module 2',
+    ),
+    (
+      Icons.slideshow_outlined,
+      'Emotional Regulation Slides',
+      'Presentation · Module 3',
+    ),
+    (
+      Icons.headphones_outlined,
+      'Guided Breathing Exercise',
+      'Audio · Module 3',
+    ),
   ];
 
   static const _assessments = [
@@ -39,8 +56,9 @@ class TrainerDashboardScreen extends StatelessWidget {
   void _openCourse(BuildContext context, Course course) =>
       Navigator.pushNamed(context, '/course-player', arguments: course.id);
 
-  void _mock(BuildContext context, String message) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  void _mock(BuildContext context, String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(message)));
 
   Widget _heading(BuildContext context, String text) => Padding(
     padding: const EdgeInsets.only(top: 32, bottom: 16),
@@ -50,7 +68,28 @@ class TrainerDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Trainer Dashboard')),
+      appBar: AppBar(
+        title: const Text('Trainer Dashboard'),
+        actions: [
+          IconButton(
+            tooltip: 'Browse learning hub',
+            onPressed: () => Navigator.pushNamed(context, '/hub'),
+            icon: const Icon(Icons.explore_outlined),
+          ),
+          IconButton(
+            tooltip: 'Sign out',
+            onPressed: () {
+              AuthPrototypeStore.instance.signOut();
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -71,7 +110,8 @@ class TrainerDashboardScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Welcome, Trainer',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(color: Colors.white),
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -85,7 +125,9 @@ class TrainerDashboardScreen extends StatelessWidget {
 
                 LayoutBuilder(
                   builder: (context, box) {
-                    final cols = box.maxWidth >= 900 ? 4 : (box.maxWidth >= 500 ? 2 : 1);
+                    final cols = box.maxWidth >= 900
+                        ? 4
+                        : (box.maxWidth >= 500 ? 2 : 1);
                     final w = (box.maxWidth - (cols - 1) * 16) / cols;
                     return Wrap(
                       spacing: 16,
@@ -100,7 +142,12 @@ class TrainerDashboardScreen extends StatelessWidget {
                                 children: [
                                   Icon(s.$1, size: 30, color: purple),
                                   const SizedBox(height: 10),
-                                  Text(s.$2, style: Theme.of(context).textTheme.headlineMedium),
+                                  Text(
+                                    s.$2,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineMedium,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(s.$3),
                                 ],
@@ -145,11 +192,17 @@ class TrainerDashboardScreen extends StatelessWidget {
                     children: [
                       for (final a in _assessments)
                         ListTile(
-                          leading: const Icon(Icons.rate_review_outlined, color: purple),
+                          leading: const Icon(
+                            Icons.rate_review_outlined,
+                            color: purple,
+                          ),
                           title: Text(a.$1),
                           subtitle: Text(a.$2),
                           trailing: OutlinedButton(
-                            onPressed: () => _mock(context, 'Prototype: review screen not built'),
+                            onPressed: () => _mock(
+                              context,
+                              'Prototype: review screen not built',
+                            ),
                             child: const Text('Review'),
                           ),
                         ),
@@ -161,7 +214,10 @@ class TrainerDashboardScreen extends StatelessWidget {
                 for (final l in _learners)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: ProgressBarCard(progress: l.$3, label: '${l.$1} · ${l.$2}'),
+                    child: ProgressBarCard(
+                      progress: l.$3,
+                      label: '${l.$1} · ${l.$2}',
+                    ),
                   ),
               ],
             ),

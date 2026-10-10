@@ -42,8 +42,8 @@ This checklist describes the current shared Flutter prototype. `[x]` means the i
 - [x] Store, Cart, theme and navigation are connected to the shared website shell; the Cart badge updates with item count.
 - [x] Login is the entry point for demo Admin and Employer accounts; directly opening a protected route redirects to Login and returns to the requested page after sign-in.
 - [x] The shared app bar provides back navigation on pushed pages, and signed-in sessions have a Sign out action.
-- [x] Login supports role-specific Learner, Trainer, Employer and Admin accounts in one sign-in form. Direct access to protected routes sends the visitor through Login and returns to the requested route.
-- [~] Login is currently a local prototype gate and Register/LMS remain Member 2 handoffs. Replace demo login with Member 2 identity, and connect user, organization, course and progress records during merge.
+- [x] Login supports demo Learner, Trainer, Employer and Admin accounts in one sign-in form. Registration creates a current-session Learner or Employer demo account, signs it in, and opens its role dashboard. Direct access to protected routes sends signed-out visitors through Login and checks the role before showing protected pages.
+- [~] Login and registration use local in-memory demo accounts, not Member 2's production identity service. New registrations do not survive app restart. Connect authentication, organizations, course access and profile data to the agreed backend before production.
 - [ ] Pull the latest Member 1 and Member 2 changes, resolve any shared route/model conflicts and verify the merged app as a team.
 - [ ] Push the agreed reviewed changes to the team GitHub repository.
 
@@ -51,6 +51,6 @@ This checklist describes the current shared Flutter prototype. `[x]` means the i
 
 - [~] Dart analyzer: the Member 3 source has no reported issues except unresolved `file_picker` symbols because the package is not present in the local Pub cache; dependency resolution did not complete in this environment.
 - [x] Dart formatting and `git diff --check` completed for the payment-flow fix; Git only reports existing line-ending normalization notices.
-- [ ] Flutter widget test, Windows build and end-to-end UI run remain unverified. Flutter dependency resolution hung without output, so the test/build could not be completed here; manually run these after `flutter pub get` succeeds.
+- [ ] Flutter widget tests, Windows build and end-to-end UI run remain unverified. Flutter CLI commands stalled without output in this environment; run the new `test/auth_flow_test.dart` and manual checklist after Flutter CLI works locally.
 - [~] Device-selected product images preview and display during the current app session; they are in-memory only and need server/storage integration for persistence.
 - [ ] No real payment, persistent database, email invitation/notification or production authorization has been configured. Demo data resets when the app restarts; Admin has a Reset demo data action for repeat walkthroughs.

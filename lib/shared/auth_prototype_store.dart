@@ -6,29 +6,79 @@ class AuthPrototypeStore extends ChangeNotifier {
   AuthPrototypeStore._();
   static final AuthPrototypeStore instance = AuthPrototypeStore._();
 
-  static const _accounts = <String, ({String password, String role})>{
-    'admin@mtalchemy.demo': (password: 'AlchemyAdmin!26', role: 'Admin'),
-    'employer@mtalchemy.demo': (
-      password: 'AlchemyEmployer!26',
-      role: 'Employer',
-    ),
-    'trainer@mtalchemy.demo': (password: 'AlchemyTrainer!26', role: 'Trainer'),
-    'learner@mtalchemy.demo': (password: 'AlchemyLearner!26', role: 'Learner'),
-  };
+  static const _accounts =
+      <String, ({String password, String role, String displayName})>{
+        'admin@mtalchemy.demo': (
+          password: 'AlchemyAdmin!26',
+          role: 'Admin',
+          displayName: 'MT Alchemy Admin',
+        ),
+        'employer@mtalchemy.demo': (
+          password: 'AlchemyEmployer!26',
+          role: 'Employer',
+          displayName: 'ABC Sdn Bhd',
+        ),
+        'trainer@mtalchemy.demo': (
+          password: 'AlchemyTrainer!26',
+          role: 'Trainer',
+          displayName: 'MT Alchemy Trainer',
+        ),
+        'learner@mtalchemy.demo': (
+          password: 'AlchemyLearner!26',
+          role: 'Learner',
+          displayName: 'MT Alchemy Learner',
+        ),
+      };
+
+  // Prototype-only accounts created in this running app. Production accounts
+  // must be created and verified by the shared authentication backend.
+  final Map<String, ({String password, String role, String displayName})>
+  _registeredAccounts = {};
 
   String? _email;
   String? _role;
+  String? _displayName;
   String? get email => _email;
   String? get role => _role;
+  String? get displayName => _displayName;
   bool get isSignedIn => _email != null;
 
   String? signIn(String email, String password) {
-    final account = _accounts[email.trim().toLowerCase()];
+    final normalizedEmail = email.trim().toLowerCase();
+    final account =
+        _accounts[normalizedEmail] ?? _registeredAccounts[normalizedEmail];
     if (account == null || account.password != password) return null;
-    _email = email.trim().toLowerCase();
+    _email = normalizedEmail;
     _role = account.role;
+    _displayName = account.displayName;
     notifyListeners();
     return account.role;
+  }
+
+  bool registerAccount({
+    required String email,
+    required String password,
+    required String role,
+    required String displayName,
+  }) {
+    final normalizedEmail = email.trim().toLowerCase();
+    if (!{'Learner', 'Employer'}.contains(role) ||
+        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(normalizedEmail) ||
+        password.length < 8 ||
+        _accounts.containsKey(normalizedEmail) ||
+        _registeredAccounts.containsKey(normalizedEmail)) {
+      return false;
+    }
+    _registeredAccounts[normalizedEmail] = (
+      password: password,
+      role: role,
+      displayName: displayName.trim(),
+    );
+    _email = normalizedEmail;
+    _role = role;
+    _displayName = displayName.trim();
+    notifyListeners();
+    return true;
   }
 
   bool hasRole(String role) => _role == role;
@@ -36,6 +86,7 @@ class AuthPrototypeStore extends ChangeNotifier {
   void signOut() {
     _email = null;
     _role = null;
+    _displayName = null;
     notifyListeners();
   }
 }

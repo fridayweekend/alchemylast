@@ -85,7 +85,8 @@ Route<dynamic> buildRoute(RouteSettings settings) {
     ),
     '/certificate' => CertificateScreen(
       courseId: settings.arguments is Map
-          ? (settings.arguments as Map)['courseId'] as String? ?? 'ei-fundamentals'
+          ? (settings.arguments as Map)['courseId'] as String? ??
+                'ei-fundamentals'
           : 'ei-fundamentals',
       score: settings.arguments is Map
           ? (settings.arguments as Map)['score'] as String? ?? ''
@@ -131,7 +132,18 @@ Route<dynamic> buildRoute(RouteSettings settings) {
   return MaterialPageRoute(
     settings: RouteSettings(name: route),
     builder: (_) {
-      if (const {'/login', '/register', '/hub', '/upskilling', '/course-detail', '/dashboard', '/course-player', '/quiz', '/certificate', '/trainer-dashboard'}.contains(route)) {
+      if (const {
+        '/login',
+        '/register',
+        '/hub',
+        '/upskilling',
+        '/course-detail',
+        '/dashboard',
+        '/course-player',
+        '/quiz',
+        '/certificate',
+        '/trainer-dashboard',
+      }.contains(route)) {
         return page;
       }
 
@@ -149,6 +161,11 @@ List<String>? _requiredRolesFor(String route) {
       route == '/quote-requests') {
     return ['Employer'];
   }
+  if (route == '/trainer-dashboard') return ['Trainer'];
+  if (route == '/dashboard' || route == '/quiz' || route == '/certificate') {
+    return ['Learner'];
+  }
+  if (route == '/course-player') return ['Learner', 'Trainer'];
   if (const {
     '/checkout',
     '/orders',

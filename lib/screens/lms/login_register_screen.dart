@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/auth_prototype_store.dart';
+
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
 
@@ -19,6 +21,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   final phoneController = TextEditingController();
   final countryController = TextEditingController();
   final learningAreaController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
@@ -28,6 +31,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     phoneController.dispose();
     countryController.dispose();
     learningAreaController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -54,7 +58,26 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
 
   void submitForm() {
     if (_formKey.currentState!.validate()) {
-      Navigator.pushNamed(context, '/hub');
+      final role = isIndividual ? 'Learner' : 'Employer';
+      final created = AuthPrototypeStore.instance.registerAccount(
+        email: emailController.text,
+        password: passwordController.text,
+        role: role,
+        displayName: nameController.text,
+      );
+      if (!created) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('An account with this email already exists.'),
+          ),
+        );
+        return;
+      }
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        role == 'Employer' ? '/employer' : '/dashboard',
+        (route) => false,
+      );
     }
   }
 
@@ -126,24 +149,6 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                         validator: emailValidator,
                       ),
                       _field(
-                        controller: passwordController,
-                        label: 'Password',
-                        obscureText: obscurePassword,
-                        validator: requiredValidator,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              obscurePassword = !obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                      _field(
                         controller: phoneController,
                         label: 'Phone',
                         keyboardType: TextInputType.phone,
@@ -180,7 +185,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                       ),
                       _field(
                         controller: countryController,
-                        label: 'Company Registration Info',
+                        label: 'Country',
                         validator: requiredValidator,
                       ),
                       _field(
@@ -190,6 +195,35 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                       ),
                     ],
 
+                    _field(
+                      controller: passwordController,
+                      label: 'Password',
+                      obscureText: obscurePassword,
+                      validator: (value) {
+                        if (value == null || value.length < 8) {
+                          return 'Use at least 8 characters';
+                        }
+                        return null;
+                      },
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () =>
+                            setState(() => obscurePassword = !obscurePassword),
+                      ),
+                    ),
+                    _field(
+                      controller: confirmPasswordController,
+                      label: 'Confirm password',
+                      obscureText: true,
+                      validator: (value) => value != passwordController.text
+                          ? 'Passwords do not match'
+                          : null,
+                    ),
+
                     const SizedBox(height: 12),
 
                     SizedBox(
@@ -197,6 +231,14 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                       child: FilledButton(
                         onPressed: submitForm,
                         child: const Text('Register'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: TextButton(
+                        onPressed: () =>
+                            Navigator.pushReplacementNamed(context, '/login'),
+                        child: const Text('Already registered? Sign in'),
                       ),
                     ),
                   ],

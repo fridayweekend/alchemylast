@@ -42,15 +42,15 @@ Admin and employer pages require the matching prototype role. All roles use the 
 - [x] Learner checkout/order/library and Admin/Employer entry points return through Login when the visitor is not signed in with a matching role; after sign-in the original destination opens.
 - [x] Employer and Admin dashboard routes are reachable from the Store and Cart portal links.
 - [x] ERD draft includes product, cart, order, payment, shipping, digital download, organization, employee, course and assignment relationships.
-- [~] Login currently uses local demo accounts for the prototype; Register and the LMS are Member 2 handoff screens. Replace demo login with Member 2 identity, then connect user, organization, course and learner progress models.
+- [~] Login uses local demo accounts, and registration creates a Learner or Employer session-only demo account. Replace these with Member 2's shared identity service, then connect user, organization, course and learner progress models.
 - [ ] Validate together after the other members' latest GitHub commits are pulled, resolve shared-route/model conflicts, then run the app as a team.
 - [ ] Push the reviewed branch/commit to the team's GitHub repository.
 
 ### Validation
 
-- [~] Dart analysis reports no Member 3 source issues except unresolved `file_picker` symbols because the package is missing from the local Pub cache; dependency resolution did not complete in this environment.
+- [x] Dart analysis reports no issues in `lib/` and `test/`.
 - [x] Dart formatter and `git diff --check` completed cleanly.
-- [ ] Flutter Windows build was not confirmed in this environment because the configured Flutter SDK cache is under `A:\src\flutter\bin\cache`, which is not writable here.
+- [ ] Flutter widget tests and Windows build were not confirmed: Flutter CLI stalled without output in this environment. Run `test/auth_flow_test.dart` and the website end-to-end checklist when Flutter CLI is available.
 - [ ] No end-to-end manual run has been completed after the latest changes.
 
 ## Prototype data and integration boundary

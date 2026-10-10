@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/mock_data.dart';
 import '../../data/progress_store.dart';
 import '../../widgets/lms/course_card.dart';
+import '../../shared/auth_prototype_store.dart';
 
 class LearnerDashboardScreen extends StatefulWidget {
   final String courseId;
@@ -16,8 +17,12 @@ class LearnerDashboardScreen extends StatefulWidget {
 class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
   final _profileFormKey = GlobalKey<FormState>();
 
-  final nameController = TextEditingController(text: 'Learner');
-  final emailController = TextEditingController(text: 'learner@example.com');
+  final nameController = TextEditingController(
+    text: AuthPrototypeStore.instance.displayName ?? 'Learner',
+  );
+  final emailController = TextEditingController(
+    text: AuthPrototypeStore.instance.email ?? 'learner@example.com',
+  );
   final preferencesController = TextEditingController(
     text: 'Leadership, Communication',
   );
@@ -38,7 +43,9 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
   }
 
   void continueCourse() {
-    Navigator.pushNamed(context, '/course-player', arguments: course.id).then((_) {
+    Navigator.pushNamed(context, '/course-player', arguments: course.id).then((
+      _,
+    ) {
       if (mounted) setState(() {});
     });
   }
@@ -46,7 +53,28 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Learner Dashboard')),
+      appBar: AppBar(
+        title: const Text('Learner Dashboard'),
+        actions: [
+          IconButton(
+            tooltip: 'Browse learning hub',
+            onPressed: () => Navigator.pushNamed(context, '/hub'),
+            icon: const Icon(Icons.explore_outlined),
+          ),
+          IconButton(
+            tooltip: 'Sign out',
+            onPressed: () {
+              AuthPrototypeStore.instance.signOut();
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
