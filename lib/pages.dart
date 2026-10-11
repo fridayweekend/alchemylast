@@ -30,16 +30,18 @@ Route<dynamic> buildRoute(RouteSettings settings) {
         ? Member3AccessDeniedPage(requiredRole: requiredRole)
         : Member3LoginPage(
             redirectRoute: route,
+            redirectArguments: settings.arguments,
             requiredRole: requiredRole,
             allowedRoles: requiredRoles,
           );
     return MaterialPageRoute(
       settings: const RouteSettings(name: '/login'),
-      builder: (_) => SiteShell(route: '/login', child: page),
+      builder: (_) => signedIn ? SiteShell(route: '/login', child: page) : page,
     );
   }
   final page = switch (route) {
     '/' => const HomePage(),
+    '/sitemap' => const SitemapPage(),
     '/about' => const AboutPage(),
     '/services' => const ServicesPage(),
     '/coaching' => const CoachingPage(),
@@ -68,7 +70,8 @@ Route<dynamic> buildRoute(RouteSettings settings) {
           ? settings.arguments! as String
           : null,
     ),
-    '/dashboard' => LearnerDashboardScreen(
+    '/dashboard' || '/enroll' => LearnerDashboardScreen(
+      enroll: route == '/enroll',
       courseId: settings.arguments is String
           ? settings.arguments! as String
           : 'ei-fundamentals',
@@ -130,7 +133,7 @@ Route<dynamic> buildRoute(RouteSettings settings) {
     _ => const HomePage(),
   };
   return MaterialPageRoute(
-    settings: RouteSettings(name: route),
+    settings: settings,
     builder: (_) {
       if (const {
         '/login',
@@ -139,6 +142,7 @@ Route<dynamic> buildRoute(RouteSettings settings) {
         '/upskilling',
         '/course-detail',
         '/dashboard',
+        '/enroll',
         '/course-player',
         '/quiz',
         '/certificate',
@@ -154,6 +158,12 @@ Route<dynamic> buildRoute(RouteSettings settings) {
 
 List<String>? _requiredRolesFor(String route) {
   if (route == '/admin' || route.startsWith('/admin/')) return ['Admin'];
+  if (const {
+    '/quote-request',
+    '/quote-confirmation',
+  }.contains(route)) {
+    return ['Employer', 'Admin'];
+  }
   if (route == '/employer' ||
       route == '/employees' ||
       route == '/assign-course' ||
@@ -162,7 +172,10 @@ List<String>? _requiredRolesFor(String route) {
     return ['Employer'];
   }
   if (route == '/trainer-dashboard') return ['Trainer'];
-  if (route == '/dashboard' || route == '/quiz' || route == '/certificate') {
+  if (route == '/dashboard' ||
+      route == '/enroll' ||
+      route == '/quiz' ||
+      route == '/certificate') {
     return ['Learner'];
   }
   if (route == '/course-player') return ['Learner', 'Trainer'];
@@ -1282,6 +1295,8 @@ class ProgrammesPage extends StatelessWidget {
   const ProgrammesPage({super.key});
   @override
   Widget build(BuildContext context) {
+    final canViewCorporate = AuthPrototypeStore.instance.isSignedIn &&
+        const {'Employer', 'Admin'}.contains(AuthPrototypeStore.instance.role);
     final programmes = [
       (
         'Leading with Emotional Intelligence',
@@ -1358,23 +1373,27 @@ class ProgrammesPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionTitle(
-            'Programmes designed for people and context.',
-            eyebrow: 'Corporate programmes',
-            subtitle:
-                'Browse representative programme directions. Final objectives, duration, group size and investment are tailored after consultation.',
+          SectionTitle(
+            canViewCorporate
+                ? 'Programmes designed for people and context.'
+                : 'Public programmes',
+            eyebrow: canViewCorporate ? 'Corporate programmes' : 'Fixed price',
+            subtitle: canViewCorporate
+                ? 'Browse representative programme directions. Final objectives, duration, group size and investment are tailored after consultation.'
+                : 'Scheduled sessions that individuals can join at a published fee.',
           ),
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFECE6FA),
-              borderRadius: BorderRadius.circular(20),
+          if (canViewCorporate)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECE6FA),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Public programme: fixed schedule and published fee.   •   Corporate programme: tailored scope and request a quote.',
+                style: TextStyle(fontWeight: FontWeight.w700, color: deepBlue),
+              ),
             ),
-            child: const Text(
-              'Public programme: fixed schedule and published fee.   •   Corporate programme: tailored scope and request a quote.',
-              style: TextStyle(fontWeight: FontWeight.w700, color: deepBlue),
-            ),
-          ),
           const SizedBox(height: 26),
           const SectionTitle(
             'Public programmes',
@@ -1426,16 +1445,59 @@ class ProgrammesPage extends StatelessWidget {
                 trainer: 'Mabel Tan KH',
                 price: 'RM 220 per participant (sample)',
               ),
+              _PublicProgrammeCard(
+                title: 'Leading with Emotional Intelligence',
+                description:
+                    'Build practical self-awareness, empathy and communication skills for confident everyday leadership.',
+                objectives: [
+                  'Recognize personal leadership patterns',
+                  'Practise empathetic communication',
+                  'Make emotionally intelligent decisions',
+                ],
+                audience: 'Emerging leaders and people managers',
+                duration: '1 day',
+                participants: 'Up to 25 participants',
+                delivery: 'In-person / blended',
+                modules: [
+                  'Understanding emotional intelligence',
+                  'Leading self',
+                  'Leading others',
+                ],
+                trainer: 'Mabel Tan KH',
+                price: 'RM 380 per participant (sample)',
+              ),
+              _PublicProgrammeCard(
+                title: 'Communication That Connects',
+                description:
+                    'Strengthen active listening, empathy and constructive dialogue for stronger workplace relationships.',
+                objectives: [
+                  'Use active listening techniques',
+                  'Handle difficult conversations',
+                  'Build clearer team alignment',
+                ],
+                audience: 'Working adults and cross-functional teams',
+                duration: '1 day',
+                participants: 'Up to 30 participants',
+                delivery: 'In-person / online',
+                modules: [
+                  'Communication styles',
+                  'Listening with empathy',
+                  'Constructive conversations',
+                ],
+                trainer: 'Mabel Tan KH',
+                price: 'RM 320 per participant (sample)',
+              ),
             ],
           ),
-          const SectionTitle(
-            'Corporate programmes',
-            eyebrow: 'Request a quote',
-            subtitle:
-                'Tailored programmes for employers. Objectives, participant numbers, delivery and modules can adapt to workforce and team demographics.',
-          ),
-          ResponsiveGrid(
-            children: [
+          if (canViewCorporate) ...[
+            const SectionTitle(
+              'Corporate programmes',
+              eyebrow: 'Request a quote',
+              subtitle:
+                  'Tailored programmes for employers. Objectives, participant numbers, delivery and modules can adapt to workforce and team demographics.',
+            ),
+            ResponsiveGrid(
+              children: [
               for (final p in programmes)
                 InfoCard(
                   child: Column(
@@ -1494,8 +1556,8 @@ class ProgrammesPage extends StatelessWidget {
                         runSpacing: 10,
                         children: [
                           FilledButton(
-                            onPressed: () => go(context, '/contact'),
-                            child: const Text('Enquire'),
+                            onPressed: () => go(context, '/quote-request'),
+                            child: const Text('Request a quote'),
                           ),
                           OutlinedButton.icon(
                             onPressed: () =>
@@ -1514,8 +1576,9 @@ class ProgrammesPage extends StatelessWidget {
                     ],
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1927,6 +1990,7 @@ class _InsightsPageState extends State<InsightsPage> {
           ),
           const SizedBox(height: 18),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: category,
             decoration: const InputDecoration(labelText: 'Category'),
             items:
@@ -2176,6 +2240,7 @@ class _ContactPageState extends State<ContactPage> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: enquiryType,
                       decoration: const InputDecoration(
                         labelText: 'Enquiry type',
@@ -2326,6 +2391,30 @@ class _Callout extends StatelessWidget {
           ),
           onPressed: () => go(context, route),
           child: Text(button),
+        ),
+      ],
+    ),
+  );
+}
+
+class SitemapPage extends StatelessWidget {
+  const SitemapPage({super.key});
+  @override
+  Widget build(BuildContext context) => PageWidth(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionTitle(
+          'Sitemap',
+          subtitle: 'Explore MT Alchemy and sign in to access your workspace.',
+        ),
+        for (final entry in {...navItems, ...corporateNavItems}.entries)
+          TextButton(
+            onPressed: () => go(context, entry.value),
+            child: Text(entry.key),
+          ),
+        const Text(
+          'Learner, trainer, employer and administrator workspaces are available through the shared Login page.',
         ),
       ],
     ),

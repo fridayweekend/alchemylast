@@ -26,7 +26,8 @@ List<PlayerLesson> _sampleLessons(List<String> titles) => [
         moduleTitle: titles[m],
         title: 'Lesson ${m + 1}.${l + 1}',
         type: _types[(m * 4 + l) % _types.length],
-        body: 'Sample content for lesson ${m + 1}.${l + 1}. Emotional '
+        body:
+            'Sample content for lesson ${m + 1}.${l + 1}. Emotional '
             'intelligence is the ability to recognise, understand and manage '
             'our own emotions, and to respond well to the emotions of others.',
       ),
@@ -46,8 +47,8 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> {
     orElse: () => mockCourses.first,
   );
   late final _lessons = _sampleLessons(_course.modules);
-  late final int _startDone =
-      (_course.progress / 100 * _lessons.length).round();
+  late final int _startDone = (progressFor(_course) / 100 * _lessons.length)
+      .round();
 
   // _done is the shared in-memory store, so progress survives leaving the screen.
   late final Set<int> _done = completedLessons.putIfAbsent(
@@ -55,10 +56,15 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> {
     () => {for (var i = 0; i < _startDone; i++) i},
   );
   late int _current =
-      lastLesson[_course.id] ?? _startDone.clamp(0, _lessons.length - 1).toInt();
+      lastLesson[_course.id] ??
+      _startDone.clamp(0, _lessons.length - 1).toInt();
 
   @override
   void dispose() {
+    if (completedLessons[_course.id] != _done) {
+      super.dispose();
+      return;
+    }
     lastLesson[_course.id] = _current;
     saveProgress();
     super.dispose();
@@ -159,7 +165,9 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> {
             runSpacing: 12,
             children: [
               OutlinedButton.icon(
-                onPressed: _current == 0 ? null : () => setState(() => _current--),
+                onPressed: _current == 0
+                    ? null
+                    : () => setState(() => _current--),
                 icon: const Icon(Icons.chevron_left),
                 label: const Text('Previous'),
               ),

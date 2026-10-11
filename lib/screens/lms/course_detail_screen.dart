@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/mock_data.dart';
+import '../../data/progress_store.dart';
 
 class CourseDetailScreen extends StatelessWidget {
   final String courseId;
@@ -13,6 +14,7 @@ class CourseDetailScreen extends StatelessWidget {
       (item) => item.id == courseId,
       orElse: () => mockCourses.first,
     );
+    final enrolled = enrolledCourses.contains(course.id);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Course Detail')),
@@ -165,12 +167,20 @@ class CourseDetailScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushNamed(
                         context,
-                        '/dashboard',
+                        enrolled ? '/course-player' : '/enroll',
                         arguments: course.id,
                       );
                     },
-                    icon: const Icon(Icons.school_outlined),
-                    label: const Text('Enrol Now'),
+                    icon: Icon(
+                      enrolled
+                          ? Icons.play_circle_outline
+                          : Icons.school_outlined,
+                    ),
+                    label: Text(
+                      enrolled
+                          ? 'Continue Course'
+                          : 'Enrol in prototype — no charge',
+                    ),
                   ),
                 ),
               ],

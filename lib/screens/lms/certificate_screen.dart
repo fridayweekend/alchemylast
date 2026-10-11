@@ -1,3 +1,6 @@
+import '../../shared/file_export.dart';
+import '../../shared/report_document.dart';
+import '../../shared/auth_prototype_store.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/mock_data.dart';
@@ -6,8 +9,18 @@ import '../../theme.dart';
 import '../../widgets.dart'; // Eyebrow
 
 const _months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 class CertificateScreen extends StatelessWidget {
@@ -25,13 +38,38 @@ class CertificateScreen extends StatelessWidget {
     orElse: () => mockCourses.first,
   );
 
-  void _mock(BuildContext context, String message) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  void _mock(BuildContext context, String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(message)));
 
   @override
   Widget build(BuildContext context) {
     final course = _course;
-    completeCourse(course.id); // reaching this screen means the quiz was passed
+    if (!completedCourses.contains(course.id)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Certificate')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Pass the course quiz to earn your certificate.'),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => Navigator.pushReplacementNamed(
+                    context,
+                    '/quiz',
+                    arguments: course.id,
+                  ),
+                  child: const Text('Take quiz'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     final now = DateTime.now();
     final date = '${now.day} ${_months[now.month - 1]} ${now.year}';
     final certId =
@@ -51,7 +89,9 @@ class CertificateScreen extends StatelessWidget {
                 Text(
                   'Congratulations!',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 34),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.headlineLarge?.copyWith(fontSize: 34),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -72,7 +112,10 @@ class CertificateScreen extends StatelessWidget {
                   ),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
                     decoration: BoxDecoration(
                       color: canvas,
                       borderRadius: BorderRadius.circular(10),
@@ -94,10 +137,10 @@ class CertificateScreen extends StatelessWidget {
                         const SizedBox(height: 22),
                         const Text('This is to certify that'),
                         const SizedBox(height: 10),
-                        const Text(
-                          'Learner',
+                        Text(
+                          AuthPrototypeStore.instance.displayName ?? 'Learner',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w800,
                             color: deepBlue,
@@ -122,7 +165,7 @@ class CertificateScreen extends StatelessWidget {
                           spacing: 24,
                           runSpacing: 20,
                           children: [
-                            _Fact(label: 'Completion date', value: date),
+                            _Fact(label: 'Generated date', value: date),
                             _Fact(label: 'Certificate ID', value: certId),
                             _Fact(label: 'Trainer', value: course.instructor),
                             Column(
@@ -135,10 +178,17 @@ class CertificateScreen extends StatelessWidget {
                                     border: Border.all(color: deepBlue),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(Icons.qr_code_2, size: 64, color: deepBlue),
+                                  child: const Icon(
+                                    Icons.qr_code_2,
+                                    size: 64,
+                                    color: deepBlue,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text('QR placeholder', style: TextStyle(fontSize: 11)),
+                                const Text(
+                                  'QR placeholder',
+                                  style: TextStyle(fontSize: 11),
+                                ),
                               ],
                             ),
                           ],
@@ -155,7 +205,10 @@ class CertificateScreen extends StatelessWidget {
                   runSpacing: 12,
                   children: [
                     FilledButton.icon(
-                      onPressed: () => _mock(context, 'Prototype: certificate preview is shown above'),
+                      onPressed: () => _mock(
+                        context,
+                        'Prototype: certificate preview is shown above',
+                      ),
                       icon: const Icon(Icons.visibility_outlined),
                       label: const Text('View Certificate'),
                     ),
@@ -164,12 +217,44 @@ class CertificateScreen extends StatelessWidget {
                         backgroundColor: softYellow,
                         foregroundColor: deepBlue,
                       ),
-                      onPressed: () => _mock(context, 'Prototype: download is simulated'),
+                      onPressed: () async {
+                        try {
+                          final destination = await saveLocalFile(
+                            'certificate-${course.id}.pdf',
+                            createReportPdf([
+                              'MT Alchemy - Prototype Certificate',
+                              'Awarded to: ${AuthPrototypeStore.instance.displayName ?? "Learner"}',
+                              'Course: ${course.title}',
+                              'Assessment: Passed',
+                              'Generated: $date',
+                              'Local demonstration certificate. No external accreditation or verification.',
+                            ]),
+                          );
+                          if (context.mounted) {
+                            _mock(
+                              context,
+                              destination ??
+                                  'Download is unavailable on this device.',
+                            );
+                          }
+                        } catch (_) {
+                          if (context.mounted) {
+                            _mock(
+                              context,
+                              'Certificate could not be downloaded. Please try again.',
+                            );
+                          }
+                        }
+                      },
                       icon: const Icon(Icons.download_outlined),
                       label: const Text('Download Certificate'),
                     ),
                     OutlinedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/dashboard', arguments: course.id),
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        '/dashboard',
+                        arguments: course.id,
+                      ),
                       child: const Text('Back to dashboard'),
                     ),
                   ],
@@ -194,7 +279,10 @@ class _Fact extends StatelessWidget {
     children: [
       Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
       const SizedBox(height: 4),
-      Text(value, style: const TextStyle(fontWeight: FontWeight.w800, color: deepBlue)),
+      Text(
+        value,
+        style: const TextStyle(fontWeight: FontWeight.w800, color: deepBlue),
+      ),
     ],
   );
 }

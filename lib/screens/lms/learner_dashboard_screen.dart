@@ -7,8 +7,13 @@ import '../../shared/auth_prototype_store.dart';
 
 class LearnerDashboardScreen extends StatefulWidget {
   final String courseId;
+  final bool enroll;
 
-  const LearnerDashboardScreen({super.key, this.courseId = 'ei-fundamentals'});
+  const LearnerDashboardScreen({
+    super.key,
+    this.courseId = 'ei-fundamentals',
+    this.enroll = false,
+  });
 
   @override
   State<LearnerDashboardScreen> createState() => _LearnerDashboardScreenState();
@@ -32,6 +37,12 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
       (item) => item.id == widget.courseId,
       orElse: () => mockCourses.first,
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.enroll) enrollCourse(widget.courseId);
   }
 
   @override
@@ -123,7 +134,7 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
                       child: _statCard(
                         context,
                         icon: Icons.menu_book_outlined,
-                        value: '1',
+                        value: enrolledCourses.length.toString(),
                         label: 'Enrolled',
                       ),
                     ),
@@ -132,7 +143,10 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
                       child: _statCard(
                         context,
                         icon: Icons.play_circle_outline,
-                        value: completedCourses.contains(course.id) ? '0' : '1',
+                        value: enrolledCourses
+                            .difference(completedCourses)
+                            .length
+                            .toString(),
                         label: 'In Progress',
                       ),
                     ),
@@ -156,11 +170,44 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                CourseCard(
-                  course: course,
-                  onContinueCourse: continueCourse,
-                  onViewCourse: continueCourse,
-                ),
+                if (enrolledCourses.isEmpty)
+                  const Text(
+                    'No courses enrolled yet. Browse the Learning Hub to get started.',
+                  ),
+                for (final enrolled in mockCourses.where(
+                  (item) => enrolledCourses.contains(item.id),
+                ))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: CourseCard(
+                      course: enrolled,
+                      onContinueCourse: () =>
+                          Navigator.pushNamed(
+                            context,
+                            '/course-player',
+                            arguments: enrolled.id,
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          }),
+                      onViewCourse: () => Navigator.pushNamed(
+                        context,
+                        '/course-detail',
+                        arguments: enrolled.id,
+                      ),
+                    ),
+                  ),
+                for (final id in completedCourses)
+                  TextButton.icon(
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      '/certificate',
+                      arguments: {'courseId': id},
+                    ),
+                    icon: const Icon(Icons.workspace_premium),
+                    label: Text(
+                      'View certificate: ${mockCourses.firstWhere((c) => c.id == id, orElse: () => mockCourses.first).title}',
+                    ),
+                  ),
 
                 const SizedBox(height: 32),
 

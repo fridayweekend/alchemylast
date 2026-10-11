@@ -1,3 +1,4 @@
+import 'auth_prototype_store.dart';
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
@@ -30,25 +31,30 @@ Widget portalLinks(BuildContext context) => Wrap(
   spacing: 8,
   runSpacing: 8,
   children: [
-    _smallRoute(context, 'My Orders', '/orders', Icons.receipt_long_outlined),
-    _smallRoute(
-      context,
-      'Digital library',
-      '/digital-library',
-      Icons.download_outlined,
-    ),
-    _smallRoute(
-      context,
-      'Employer portal',
-      '/employer',
-      Icons.business_outlined,
-    ),
-    _smallRoute(
-      context,
-      'Admin portal',
-      '/admin',
-      Icons.admin_panel_settings_outlined,
-    ),
+    if (AuthPrototypeStore.instance.hasRole('Learner') ||
+        AuthPrototypeStore.instance.hasRole('Employer'))
+      _smallRoute(context, 'My Orders', '/orders', Icons.receipt_long_outlined),
+    if (AuthPrototypeStore.instance.hasRole('Learner'))
+      _smallRoute(
+        context,
+        'Digital library',
+        '/digital-library',
+        Icons.download_outlined,
+      ),
+    if (AuthPrototypeStore.instance.hasRole('Employer'))
+      _smallRoute(
+        context,
+        'Employer portal',
+        '/employer',
+        Icons.business_outlined,
+      ),
+    if (AuthPrototypeStore.instance.hasRole('Admin'))
+      _smallRoute(
+        context,
+        'Admin portal',
+        '/admin',
+        Icons.admin_panel_settings_outlined,
+      ),
   ],
 );
 

@@ -1,6 +1,6 @@
 # Member 3 ERD Draft
 
-This draft covers commerce and employer features owned by Member 3. It is a planning artifact for the Flutter prototype; the current implementation keeps sample records in memory and does not connect to Firebase or another backend.
+This draft covers commerce and employer features owned by Member 3. It is a planning artifact for the Flutter prototype; the current implementation saves prototype records locally with shared_preferences and does not connect to Firebase or another backend. The ERD describes a proposed relational backend, not an existing database.
 
 ```mermaid
 erDiagram
@@ -191,3 +191,8 @@ erDiagram
 - Keep shipping details separate from billing details, and store the payment provider reference and validated status in the server-side payment record.
 - `CONTACT_ENQUIRY` captures public website enquiries and may be submitted before the visitor creates an account, so `user_id` is optional. The admin inbox should retain status and response/audit details in the production backend.
 - Store amounts in a fixed precision decimal type and store timestamps in UTC in the backend.
+
+
+## Integrated prototype mapping
+
+Employer email is the local organization discriminator on employees and assignments. Employee email links an assignment to a learner account. Course titles map to IDs in `lib/data/mock_data.dart`; a backend should replace this with immutable course and organization IDs. Local progress is keyed by learner email and course ID. Orders preserve product/price snapshots and stock-reservation state. A production backend must enforce these relationships, role permissions, entitlements and transactions independently of the Flutter client.

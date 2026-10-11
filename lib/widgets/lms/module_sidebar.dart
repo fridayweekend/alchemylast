@@ -21,8 +21,14 @@ class ModuleSidebar extends StatelessWidget {
 
   Widget _icon(bool done, bool current) {
     if (done) return const Icon(Icons.check_circle, color: purple, size: 22);
-    if (current) return const Icon(Icons.play_circle_fill, color: deepBlue, size: 22);
-    return const Icon(Icons.radio_button_unchecked, color: Colors.black38, size: 22);
+    if (current) {
+      return const Icon(Icons.play_circle_fill, color: deepBlue, size: 22);
+    }
+    return const Icon(
+      Icons.radio_button_unchecked,
+      color: Colors.black38,
+      size: 22,
+    );
   }
 
   @override
@@ -32,14 +38,19 @@ class ModuleSidebar extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Text(
           'Course content',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: deepBlue),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: deepBlue,
+          ),
         ),
       ),
     ];
 
     for (var i = 0; i < lessons.length; i++) {
       final lesson = lessons[i];
-      final firstInModule = i == 0 || lessons[i - 1].moduleIndex != lesson.moduleIndex;
+      final firstInModule =
+          i == 0 || lessons[i - 1].moduleIndex != lesson.moduleIndex;
       if (firstInModule) {
         final indexes = [
           for (var j = 0; j < lessons.length; j++)
@@ -51,7 +62,9 @@ class ModuleSidebar extends StatelessWidget {
           Container(
             margin: const EdgeInsets.only(top: 12),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            color: moduleCurrent ? softYellow.withValues(alpha: .28) : Colors.transparent,
+            color: moduleCurrent
+                ? softYellow.withValues(alpha: .28)
+                : Colors.transparent,
             child: Row(
               children: [
                 _icon(moduleDone, moduleCurrent),
@@ -59,7 +72,10 @@ class ModuleSidebar extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Module ${lesson.moduleIndex + 1}: ${lesson.moduleTitle}',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: deepBlue),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: deepBlue,
+                    ),
                   ),
                 ),
               ],
@@ -76,7 +92,9 @@ class ModuleSidebar extends StatelessWidget {
           selectedColor: deepBlue,
           title: Text(
             lesson.title,
-            style: TextStyle(fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500),
+            style: TextStyle(
+              fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,
+            ),
           ),
           trailing: _icon(completed.contains(i), isCurrent),
           onTap: () => onSelect(i),
@@ -84,6 +102,6 @@ class ModuleSidebar extends StatelessWidget {
       );
     }
 
-    return ListView(children: children);
+    return Material(color: Colors.transparent, child: ListView(children: children));
   }
 }

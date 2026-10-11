@@ -1,3 +1,4 @@
+import '../data/mock_data.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -159,7 +160,9 @@ class EmployeeManagementPage extends StatelessWidget {
       title: 'Your people, learning together.',
       eyebrow: 'Employee management',
       children: [
-        Row(
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
           children: [
             FilledButton.icon(
               onPressed: () => showDialog(
@@ -432,19 +435,13 @@ class _CourseAssignmentPageState extends State<CourseAssignmentPage> {
               DropdownButtonFormField<String>(
                 initialValue: course,
                 decoration: const InputDecoration(labelText: 'Course'),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Emotional Intelligence Fundamentals',
-                    child: Text('Emotional Intelligence Fundamentals'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Leadership That Connects',
-                    child: Text('Leadership That Connects'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Mindfulness for Everyday Resilience',
-                    child: Text('Mindfulness for Everyday Resilience'),
-                  ),
+                isExpanded: true,
+                items: [
+                  for (final item in mockCourses)
+                    DropdownMenuItem(
+                      value: item.title,
+                      child: Text(item.title),
+                    ),
                 ],
                 onChanged: (v) => setState(() => course = v ?? course),
               ),
@@ -502,7 +499,7 @@ class _CourseAssignmentPageState extends State<CourseAssignmentPage> {
       ),
       const SizedBox(height: 24),
       Text(
-        'Employees receive an assignment notification in the final integrated application. This prototype records the assignment in the local session.',
+        'Employees receive an assignment notification in the final integrated application. This prototype saves the assignment on this device.',
         style: const TextStyle(color: Colors.black54),
       ),
     ],

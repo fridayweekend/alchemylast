@@ -1,38 +1,63 @@
 # MT Alchemy Platform
 
-A responsive Flutter prototype for MT Alchemy's corporate website, store, employer workspace and commerce admin screens.
+A Flutter prototype combining the corporate website, learning portal, store, employer workspace and admin screens.
 
-## Run the app
+## Run
+
+Requires Dart 3.11 or newer because of shared_preferences 2.5.6. Verified with Flutter 3.47.7 / Dart 3.13.5.
 
 ```powershell
+cd "C:\Users\user\OneDrive\Desktop\Alchemy"
 flutter pub get
-flutter run -d windows
+flutter run -d edge
 ```
 
-To run the web build, use `flutter run -d chrome` on a machine with Chrome available.
+Use `flutter run -d chrome` if Chrome is installed. Release: `flutter build web`.
 
-## Feature map
+## Demo sign-in
 
-- Public website and shared navigation: `lib/pages.dart`, `lib/widgets.dart`
-- Store, product details and product artwork: `lib/commerce/store_pages.dart`
-- Cart, checkout, order confirmation, order history and digital library: `lib/commerce/order_pages.dart`
-- Commerce records and prototype state: `lib/commerce/commerce_prototype_store.dart`
-- Employer dashboard, employees, course assignment and reports: `lib/employer/employer_pages.dart`
-- Commerce admin, product/inventory and order management: `lib/admin/admin_pages.dart`
-- Member 3 demo sign-in and role gate: `lib/shared/member3_login_page.dart`, `lib/shared/auth_prototype_store.dart`
-- Shared portal layout and action cards: `lib/shared/portal_components.dart`
-- Theme: `lib/theme.dart`
-- Commerce/employer ERD: `docs/commerce_employer_erd.md`
-- Member 3 screen coverage and integration notes: `docs/commerce_employer_admin_guide.md`
-- Member 3 acceptance checklist: `docs/member3_acceptance_checklist.md`
-- Member 3 manual journey review: `docs/member3_flow_review_checklist.md`
+Use the shared Login page. Roles come from the account; registration cannot create administrators or trainers.
 
-## Prototype behavior
+| Role | Email | Password |
+| --- | --- | --- |
+| Learner | learner@mtalchemy.demo | AlchemyLearner!26 |
+| Trainer | trainer@mtalchemy.demo | AlchemyTrainer!26 |
+| Employer | employer@mtalchemy.demo | AlchemyEmployer!26 |
+| Admin | admin@mtalchemy.demo | AlchemyAdmin!26 |
 
-Store, cart, employee, assignment and order changes work in the current app session. Data is stored in memory and resets after restart. Login uses role-specific local demo accounts; protected routes send visitors to Login and return to their requested destination after sign-in. Checkout records a pending payment and does not charge a card or contact a payment provider. In the demo, mark an order Paid from Admin to make bundled digital resources available to that signed-in Learner. Device-selected product images preview in the app but remain in memory until backend storage is integrated. Windows Download resource and report CSV/PDF actions save files in Downloads.
+These are public prototype credentials, not production authentication. Newly registered accounts exist until the app restarts; use fictional details. Sessions are not persisted. Local browser storage is not a security boundary.
 
-Member 3's screen-by-screen checklist is in `docs/member3_acceptance_checklist.md`; the ERD draft and handoff notes are in `docs/commerce_employer_erd.md` and `docs/commerce_employer_admin_guide.md`. Connect the commerce and employer records to the team's agreed authentication, LMS and persistence services before treating this prototype as a production system. Enforce role access and digital purchase entitlements on the backend. The file-save actions are unavailable on web in this prototype.
+## Features and state
 
-## Supplied imagery
+- Corporate pages, responsive navigation, sitemap and validated enquiry submission.
+- Learning Hub, explicit free prototype enrollment, account-specific progress, quiz and certificate eligibility. Certificate PDF export uses the existing report generator.
+- Store, physical/digital products, cart, checkout, pending payment, orders, digital resources and shipping status.
+- Employer employees, course assignment and reports. Assignments use the LMS catalogue; an employee using the same email sees assigned courses, and lesson progress/quiz scores update the employer report.
+- Admin product/stock, order/payment, quotation and enquiry management.
+- Trainer course preview and local sample-assessment feedback.
 
-Workshop photographs in `assets/images/` are used as contextual MT Alchemy brand photography. Digital resource covers use styled icons because the supplied source documents do not include product package photography.
+Commerce records, product images, orders, quotes, enquiries, employees and assignments are saved using shared_preferences on the current device/browser origin. Learner progress is stored separately by email. Employer records are filtered by employer account. The cart is a shared device cart. Trainer feedback is saved locally. Private browsing, clearing site data or changing the localhost port can remove or separate this data. Saving errors appear in the shared site shell.
+
+Checkout does not charge money. Admin can mark a demo order Paid or Failed; digital files unlock only after Paid. Physical stock is reserved at checkout, restored on payment failure, and rechecked before a retry. Shipping and tracking are simulated. Browser export requests a download; Windows exports save to Downloads.
+
+LMS lessons, quizzes, trainer statistics and learners remain sample content. Enrollment does not process the catalogue price. Certificate PDFs are unaccredited demo documents; the QR graphic is a placeholder. There is no real backend, email, payment provider or cross-device synchronization.
+
+## Project map
+
+- `lib/pages.dart`, `lib/widgets.dart`, `lib/theme.dart`: public routes, screens and shared design.
+- `lib/screens/lms/`, `lib/data/progress_store.dart`: learning and trainer journeys.
+- `lib/commerce/`: catalogue, cart, orders, quotes and persisted commerce state.
+- `lib/employer/`, `lib/admin/`: employer and administrative tools.
+- `lib/shared/`: role sessions, reusable portal components, PDF and file export.
+- `docs/commerce_employer_erd.md`: proposed backend ERD.
+- `docs/completion_report.md`: changes, validation evidence, limitations and changed files.
+
+## Verification
+
+```powershell
+flutter analyze
+flutter test
+flutter build web
+```
+
+Tests include auth restrictions, selected-course redirects, certificate eligibility, quiz completion, enquiry validation, persistence, stock/payment transitions, digital entitlements, employer isolation and public/portal rendering at 390 and 1440 pixels.

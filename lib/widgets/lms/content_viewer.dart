@@ -91,7 +91,11 @@ class _TextView extends StatelessWidget {
 }
 
 class _PlaceholderView extends StatelessWidget {
-  const _PlaceholderView({required this.lesson, required this.hint, this.action});
+  const _PlaceholderView({
+    required this.lesson,
+    required this.hint,
+    this.action,
+  });
   final PlayerLesson lesson;
   final String hint;
   final Widget? action;

@@ -1,3 +1,5 @@
+import '../commerce/commerce_prototype_store.dart';
+import '../data/progress_store.dart';
 import 'package:flutter/foundation.dart';
 
 /// Temporary role session for the UI prototype. Replace this with Member 2's
@@ -51,6 +53,10 @@ class AuthPrototypeStore extends ChangeNotifier {
     _email = normalizedEmail;
     _role = account.role;
     _displayName = account.displayName;
+    CommercePrototypeStore.instance.activeEmployer = _role == 'Employer'
+        ? _email
+        : null;
+    selectLearner(_email);
     notifyListeners();
     return account.role;
   }
@@ -77,6 +83,10 @@ class AuthPrototypeStore extends ChangeNotifier {
     _email = normalizedEmail;
     _role = role;
     _displayName = displayName.trim();
+    CommercePrototypeStore.instance.activeEmployer = _role == 'Employer'
+        ? _email
+        : null;
+    selectLearner(_email);
     notifyListeners();
     return true;
   }
@@ -84,6 +94,8 @@ class AuthPrototypeStore extends ChangeNotifier {
   bool hasRole(String role) => _role == role;
 
   void signOut() {
+    CommercePrototypeStore.instance.activeEmployer = null;
+    selectLearner(null);
     _email = null;
     _role = null;
     _displayName = null;

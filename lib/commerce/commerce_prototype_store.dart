@@ -1,9 +1,54 @@
+import 'dart:convert';
+import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
 /// Sample catalogue records for the Member 3 prototype. Replace these with
 /// Firestore records during the functional project phase.
 class ShopProduct {
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'price': price,
+    'category': category,
+    'icon': icon.codePoint,
+    'imagePath': imagePath,
+    'imageBytes': imageBytes == null ? null : base64Encode(imageBytes!),
+    'downloadAssetPath': downloadAssetPath,
+    'digital': digital,
+    'stock': stock,
+    'published': published,
+  };
+  factory ShopProduct.fromJson(Map<String, dynamic> json) => ShopProduct(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    description: json['description'] as String,
+    price: (json['price'] as num).toDouble(),
+    category: json['category'] as String,
+    icon:
+        const [
+          Icons.menu_book_outlined,
+          Icons.auto_stories_outlined,
+          Icons.style_outlined,
+          Icons.groups_2_outlined,
+          Icons.download_outlined,
+          Icons.inventory_2_outlined,
+        ].firstWhere(
+          (icon) => icon.codePoint == json['icon'],
+          orElse: () => Icons.inventory_2_outlined,
+        ),
+    imagePath: json['imagePath'] as String?,
+    imageBytes: json['imageBytes'] == null
+        ? null
+        : base64Decode(json['imageBytes'] as String),
+    downloadAssetPath: json['downloadAssetPath'] as String?,
+    digital: json['digital'] as bool,
+    stock: json['stock'] as int,
+    published: json['published'] as bool,
+  );
+
   const ShopProduct({
     required this.id,
     required this.name,
@@ -64,6 +109,17 @@ class ShopProduct {
 }
 
 class CartLine {
+  Map<String, dynamic> toJson() => {
+    'product': product.toJson(),
+    'quantity': quantity,
+  };
+  factory CartLine.fromJson(Map<String, dynamic> json) => CartLine(
+    product: ShopProduct.fromJson(
+      Map<String, dynamic>.from(json['product'] as Map),
+    ),
+    quantity: json['quantity'] as int,
+  );
+
   const CartLine({required this.product, required this.quantity});
   final ShopProduct product;
   final int quantity;
@@ -71,6 +127,41 @@ class CartLine {
 }
 
 class ShopOrder {
+  Map<String, dynamic> toJson() => {
+    'number': number,
+    'date': date.toIso8601String(),
+    'lines': lines.map((e) => e.toJson()).toList(),
+    'total': total,
+    'paymentStatus': paymentStatus,
+    'paymentMethod': paymentMethod,
+    'fulfilmentStatus': fulfilmentStatus,
+    'customerName': customerName,
+    'customerEmail': customerEmail,
+    'customerPhone': customerPhone,
+    'billingAddress': billingAddress,
+    'shippingAddress': shippingAddress,
+    'trackingNumber': trackingNumber,
+    'stockReserved': stockReserved,
+  };
+  factory ShopOrder.fromJson(Map<String, dynamic> json) => ShopOrder(
+    number: json['number'] as String,
+    date: DateTime.parse(json['date'] as String),
+    lines: (json['lines'] as List)
+        .map((e) => CartLine.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    total: (json['total'] as num).toDouble(),
+    paymentStatus: json['paymentStatus'] as String,
+    paymentMethod: json['paymentMethod'] as String,
+    fulfilmentStatus: json['fulfilmentStatus'] as String,
+    customerName: json['customerName'] as String,
+    customerEmail: json['customerEmail'] as String,
+    customerPhone: json['customerPhone'] as String,
+    billingAddress: json['billingAddress'] as String?,
+    shippingAddress: json['shippingAddress'] as String?,
+    trackingNumber: json['trackingNumber'] as String?,
+    stockReserved: json['stockReserved'] as bool,
+  );
+
   const ShopOrder({
     required this.number,
     required this.date,
@@ -107,6 +198,35 @@ class ShopOrder {
 }
 
 class QuoteRequest {
+  Map<String, dynamic> toJson() => {
+    'reference': reference,
+    'createdAt': createdAt.toIso8601String(),
+    'customerName': customerName,
+    'organizationName': organizationName,
+    'email': email,
+    'phone': phone,
+    'lines': lines.map((e) => e.toJson()).toList(),
+    'requirements': requirements,
+    'status': status,
+    'quotedTotal': quotedTotal,
+    'adminNote': adminNote,
+  };
+  factory QuoteRequest.fromJson(Map<String, dynamic> json) => QuoteRequest(
+    reference: json['reference'] as String,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    customerName: json['customerName'] as String,
+    organizationName: json['organizationName'] as String,
+    email: json['email'] as String,
+    phone: json['phone'] as String,
+    lines: (json['lines'] as List)
+        .map((e) => CartLine.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    requirements: json['requirements'] as String,
+    status: json['status'] as String,
+    quotedTotal: (json['quotedTotal'] as num?)?.toDouble(),
+    adminNote: json['adminNote'] as String?,
+  );
+
   const QuoteRequest({
     required this.reference,
     required this.createdAt,
@@ -153,6 +273,31 @@ class QuoteRequest {
 }
 
 class ContactEnquiry {
+  Map<String, dynamic> toJson() => {
+    'reference': reference,
+    'createdAt': createdAt.toIso8601String(),
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'enquiryType': enquiryType,
+    'message': message,
+    'organization': organization,
+    'status': status,
+    'adminNote': adminNote,
+  };
+  factory ContactEnquiry.fromJson(Map<String, dynamic> json) => ContactEnquiry(
+    reference: json['reference'] as String,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    name: json['name'] as String,
+    email: json['email'] as String,
+    phone: json['phone'] as String,
+    enquiryType: json['enquiryType'] as String,
+    message: json['message'] as String,
+    organization: json['organization'] as String,
+    status: json['status'] as String,
+    adminNote: json['adminNote'] as String?,
+  );
+
   const ContactEnquiry({
     required this.reference,
     required this.createdAt,
@@ -195,6 +340,106 @@ class ContactEnquiry {
 class CommercePrototypeStore extends ChangeNotifier {
   CommercePrototypeStore._();
   static final CommercePrototypeStore instance = CommercePrototypeStore._();
+
+  SharedPreferences? _preferences;
+  Future<void> _pendingSave = Future.value();
+  String? storageError;
+  bool _loading = false;
+
+  Future<void> load() async {
+    _loading = true;
+    try {
+      _preferences = await SharedPreferences.getInstance();
+      final raw = _preferences!.getString('alchemy_commerce_v1');
+      if (raw != null) {
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        final products = (data['_products'] as List)
+            .map(
+              (e) => ShopProduct.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
+            .toList();
+        final orders = (data['_orders'] as List)
+            .map((e) => ShopOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        final quoteRequests = (data['_quoteRequests'] as List)
+            .map(
+              (e) => QuoteRequest.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
+            .toList();
+        final contactEnquiries = (data['_contactEnquiries'] as List)
+            .map(
+              (e) =>
+                  ContactEnquiry.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
+            .toList();
+        final cart = Map<String, int>.from(data['_cart'] as Map);
+        final employees = (data['_employees'] as List)
+            .map((e) => Map<String, String>.from(e as Map))
+            .toList();
+        final assignments = (data['_assignments'] as List)
+            .map((e) => Map<String, Object>.from(e as Map))
+            .toList();
+        _products
+          ..clear()
+          ..addAll(products);
+        _orders
+          ..clear()
+          ..addAll(orders);
+        _quoteRequests
+          ..clear()
+          ..addAll(quoteRequests);
+        _contactEnquiries
+          ..clear()
+          ..addAll(contactEnquiries);
+        _cart
+          ..clear()
+          ..addAll(cart);
+        _employees
+          ..clear()
+          ..addAll(employees);
+        _assignments
+          ..clear()
+          ..addAll(assignments);
+      }
+      storageError = null;
+    } catch (_) {
+      storageError =
+          'Saved prototype data could not be loaded. Check device storage before making changes.';
+    } finally {
+      _loading = false;
+    }
+  }
+
+  Future<void> flush() => _pendingSave;
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    if (_loading || _preferences == null) return;
+    final snapshot = jsonEncode({
+      '_products': _products.map((e) => e.toJson()).toList(),
+      '_orders': _orders.map((e) => e.toJson()).toList(),
+      '_quoteRequests': _quoteRequests.map((e) => e.toJson()).toList(),
+      '_contactEnquiries': _contactEnquiries.map((e) => e.toJson()).toList(),
+      '_cart': _cart,
+      '_employees': _employees,
+      '_assignments': _assignments,
+    });
+    _pendingSave = _pendingSave.then((_) async {
+      try {
+        final saved = await _preferences!.setString(
+          'alchemy_commerce_v1',
+          snapshot,
+        );
+        storageError = saved
+            ? null
+            : 'Changes could not be saved on this device.';
+      } catch (_) {
+        storageError = 'Changes could not be saved on this device.';
+      }
+      super.notifyListeners();
+    });
+  }
 
   static const _starterProducts = <ShopProduct>[
     ShopProduct(
@@ -284,7 +529,7 @@ class CommercePrototypeStore extends ChangeNotifier {
       'hours': 12,
     },
     {
-      'course': 'Leadership That Connects',
+      'course': 'Leadership Essentials',
       'team': 'Management',
       'employee': 'farah@example.com',
       'due': '14 Nov 2026',
@@ -322,8 +567,39 @@ class CommercePrototypeStore extends ChangeNotifier {
       (order) => order.customerEmail.toLowerCase() == email.toLowerCase(),
     ),
   );
-  List<Map<String, String>> get employees => List.unmodifiable(_employees);
-  List<Map<String, Object>> get assignments => List.unmodifiable(_assignments);
+  List<String> assignedCoursesFor(String email) => _assignments
+      .where(
+        (a) => (a['employee'] as String).toLowerCase() == email.toLowerCase(),
+      )
+      .map((a) => a['course'] as String)
+      .toList();
+
+  void updateLearningProgress(
+    String email,
+    String course,
+    int progress, {
+    int? score,
+  }) {
+    var changed = false;
+    for (final assignment in _assignments) {
+      if ((assignment['employee'] as String).toLowerCase() ==
+              email.toLowerCase() &&
+          assignment['course'] == course) {
+        assignment['progress'] = progress;
+        if (score != null) assignment['score'] = score;
+        changed = true;
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
+  String? activeEmployer;
+  bool _belongsToEmployer(Map record) =>
+      (record['organization'] ?? 'employer@mtalchemy.demo') == activeEmployer;
+  List<Map<String, String>> get employees =>
+      List.unmodifiable(_employees.where(_belongsToEmployer));
+  List<Map<String, Object>> get assignments =>
+      List.unmodifiable(_assignments.where(_belongsToEmployer));
   int get cartCount => _cart.values.fold(0, (sum, quantity) => sum + quantity);
   int cartQuantityFor(String id) => _cart[id] ?? 0;
   bool canAddToCart(String id) {
@@ -503,8 +779,7 @@ class CommercePrototypeStore extends ChangeNotifier {
       return null;
     }
     final order = ShopOrder(
-      number:
-          'MA${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+      number: 'MA${DateTime.now().microsecondsSinceEpoch}',
       date: DateTime.now(),
       lines: List.unmodifiable(lines),
       total: total,
@@ -543,7 +818,14 @@ class CommercePrototypeStore extends ChangeNotifier {
     required String department,
     required String email,
   }) {
+    if (activeEmployer == null ||
+        employees.any(
+          (e) => e['email']!.toLowerCase() == email.trim().toLowerCase(),
+        )) {
+      return;
+    }
     _employees.add({
+      'organization': activeEmployer!,
       'name': name,
       'department': department,
       'email': email,
@@ -553,8 +835,13 @@ class CommercePrototypeStore extends ChangeNotifier {
   }
 
   void removeEmployee(String email) {
-    _employees.removeWhere((employee) => employee['email'] == email);
-    _assignments.removeWhere((assignment) => assignment['employee'] == email);
+    _employees.removeWhere(
+      (employee) => employee['email'] == email && _belongsToEmployer(employee),
+    );
+    _assignments.removeWhere(
+      (assignment) =>
+          assignment['employee'] == email && _belongsToEmployer(assignment),
+    );
     notifyListeners();
   }
 
@@ -564,7 +851,17 @@ class CommercePrototypeStore extends ChangeNotifier {
     required String due,
     required String employeeEmail,
   }) {
+    if (activeEmployer == null ||
+        !employees.any((e) => e['email'] == employeeEmail)) {
+      return;
+    }
+    if (assignments.any(
+      (a) => a['employee'] == employeeEmail && a['course'] == course,
+    )) {
+      return;
+    }
     _assignments.insert(0, {
+      'organization': activeEmployer!,
       'course': course,
       'team': team,
       'due': due,

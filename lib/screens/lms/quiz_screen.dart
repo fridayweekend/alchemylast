@@ -42,7 +42,12 @@ const _questions = [
   QuizQuestion(
     type: QuestionType.multipleChoice,
     prompt: 'Which skill is the foundation of emotional intelligence?',
-    options: ['Self-awareness', 'Public speaking', 'Time management', 'Negotiation'],
+    options: [
+      'Self-awareness',
+      'Public speaking',
+      'Time management',
+      'Negotiation',
+    ],
     correct: ['Self-awareness'],
     explanation:
         'Noticing your own emotions is the starting point for managing them and for understanding others.',
@@ -58,7 +63,12 @@ const _questions = [
   QuizQuestion(
     type: QuestionType.multipleAnswer,
     prompt: 'Which of these are core parts of emotional intelligence?',
-    options: ['Self-regulation', 'Empathy', 'Memorising facts', 'Social skills'],
+    options: [
+      'Self-regulation',
+      'Empathy',
+      'Memorising facts',
+      'Social skills',
+    ],
     correct: ['Self-regulation', 'Empathy', 'Social skills'],
     explanation:
         'Self-regulation, empathy and social skills are core parts. Memorising facts is not.',
@@ -155,7 +165,12 @@ class _QuizScreenState extends State<QuizScreen> {
     }
     if (_index == _questions.length - 1) {
       setState(() => _submitted = true);
-      if (_score / _questions.length >= _passMark) completeCourse(widget.courseId);
+      if (_score / _questions.length >= _passMark) {
+        completeCourse(
+          widget.courseId,
+          score: (_score / _questions.length * 100).round(),
+        );
+      }
     } else {
       setState(() => _index++);
       _shortController.clear();
@@ -191,12 +206,17 @@ class _QuizScreenState extends State<QuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          spacing: 16,
+          runSpacing: 8,
           children: [
             Text(
               'Question ${_index + 1} of ${_questions.length}',
-              style: const TextStyle(fontWeight: FontWeight.w800, color: deepBlue),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: deepBlue,
+              ),
             ),
             const Text('Pass mark: 60%'),
           ],
@@ -226,7 +246,8 @@ class _QuizScreenState extends State<QuizScreen> {
                   child: TextFormField(
                     controller: _shortController,
                     decoration: const InputDecoration(labelText: 'Your answer'),
-                    validator: (value) => (value == null || value.trim().isEmpty)
+                    validator: (value) =>
+                        (value == null || value.trim().isEmpty)
                         ? 'Please type an answer'
                         : null,
                     onFieldSubmitted: (_) => _next(),
@@ -321,7 +342,10 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
         ),
         const SizedBox(height: 28),
-        Text('Review your answers', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          'Review your answers',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 14),
         for (var i = 0; i < total; i++) ...[
           InfoCard(
@@ -345,10 +369,14 @@ class _QuizScreenState extends State<QuizScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _line('Your answer', _answers[i].isEmpty ? '-' : _answers[i].join(', ')),
+                _line(
+                  'Your answer',
+                  _answers[i].isEmpty ? '-' : _answers[i].join(', '),
+                ),
                 _line(
                   'Correct answer',
-                  _questions[i].displayAnswer ?? _questions[i].correct.join(', '),
+                  _questions[i].displayAnswer ??
+                      _questions[i].correct.join(', '),
                 ),
                 _line('Explanation', _questions[i].explanation),
               ],
@@ -365,7 +393,10 @@ class _QuizScreenState extends State<QuizScreen> {
     child: Text.rich(
       TextSpan(
         children: [
-          TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w700)),
+          TextSpan(
+            text: '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           TextSpan(text: text),
         ],
       ),

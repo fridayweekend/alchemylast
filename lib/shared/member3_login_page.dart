@@ -8,10 +8,12 @@ class Member3LoginPage extends StatefulWidget {
   const Member3LoginPage({
     super.key,
     this.redirectRoute,
+    this.redirectArguments,
     this.requiredRole,
     this.allowedRoles,
   });
   final String? redirectRoute;
+  final Object? redirectArguments;
   final String? requiredRole;
   final List<String>? allowedRoles;
 
@@ -103,7 +105,11 @@ class _Member3LoginPageState extends State<Member3LoginPage> {
       return;
     }
     final destination = widget.redirectRoute ?? _homeFor(role);
-    Navigator.pushReplacementNamed(context, destination);
+    Navigator.pushReplacementNamed(
+      context,
+      destination,
+      arguments: widget.redirectArguments,
+    );
   }
 
   @override

@@ -863,7 +863,7 @@ class ContactEnquiriesPage extends StatelessWidget {
         const InfoCard(
           color: Color(0xFFFFF8DE),
           child: Text(
-            'Submissions are saved in this app session so the team can review them. No email or external backend is connected in this prototype.',
+            'Submissions are saved on this device so the team can review them. No email or external backend is connected in this prototype.',
           ),
         ),
         const SizedBox(height: 16),

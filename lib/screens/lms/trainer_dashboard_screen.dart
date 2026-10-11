@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/mock_data.dart';
@@ -56,9 +57,71 @@ class TrainerDashboardScreen extends StatelessWidget {
   void _openCourse(BuildContext context, Course course) =>
       Navigator.pushNamed(context, '/course-player', arguments: course.id);
 
-  void _mock(BuildContext context, String message) => ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(message)));
+  Future<void> _review(BuildContext context, String assessment) async {
+    final prefs = await SharedPreferences.getInstance();
+    var note = prefs.getString('trainer_review_$assessment') ?? '';
+    if (!context.mounted) return;
+    final form = GlobalKey<FormState>();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(assessment),
+        content: SizedBox(
+          width: 480,
+          child: Form(
+            key: form,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Sample assessment review. Feedback is saved on this device; no notification is sent.',
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: note,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Trainer feedback',
+                  ),
+                  onChanged: (value) => note = value,
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Enter feedback before saving.'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (form.currentState!.validate()) {
+                Navigator.pop(dialogContext, note.trim());
+              }
+            },
+            child: const Text('Save review'),
+          ),
+        ],
+      ),
+    );
+    if (result == null) return;
+    final saved = await prefs.setString('trainer_review_$assessment', result);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            saved
+                ? 'Review saved on this device.'
+                : 'Review could not be saved.',
+          ),
+        ),
+      );
+    }
+  }
 
   Widget _heading(BuildContext context, String text) => Padding(
     padding: const EdgeInsets.only(top: 32, bottom: 16),
@@ -199,10 +262,7 @@ class TrainerDashboardScreen extends StatelessWidget {
                           title: Text(a.$1),
                           subtitle: Text(a.$2),
                           trailing: OutlinedButton(
-                            onPressed: () => _mock(
-                              context,
-                              'Prototype: review screen not built',
-                            ),
+                            onPressed: () => _review(context, a.$1),
                             child: const Text('Review'),
                           ),
                         ),
@@ -210,7 +270,7 @@ class TrainerDashboardScreen extends StatelessWidget {
                   ),
                 ),
 
-                _heading(context, 'Learners and progress'),
+                _heading(context, 'Sample learners and progress'),
                 for (final l in _learners)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),

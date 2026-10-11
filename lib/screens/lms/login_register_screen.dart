@@ -108,7 +108,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Start your learning journey with MT Alchemy.',
+                      'Prototype account: available until this app restarts. Use demo details only.',
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 24),

@@ -46,7 +46,23 @@ class _QuoteRequestPageState extends State<QuoteRequestPage> {
         ? null
         : _store.productById(widget.productId!);
     final lines = directProduct == null
-        ? _store.cartLines
+        ? (_store.cartLines.isEmpty
+              ? [
+                  CartLine(
+                    product: const ShopProduct(
+                      id: 'tailored-programme',
+                      name: 'Tailored corporate programme / service',
+                      description:
+                          'Scope and pricing to be confirmed after reviewing requirements.',
+                      price: 0,
+                      category: 'Service',
+                      icon: Icons.groups,
+                      digital: true,
+                    ),
+                    quantity: _quantity,
+                  ),
+                ]
+              : _store.cartLines)
         : [CartLine(product: directProduct, quantity: _quantity)];
     return PortalPage(
       title: 'Tell us what your organisation needs.',
@@ -55,7 +71,7 @@ class _QuoteRequestPageState extends State<QuoteRequestPage> {
         const InfoCard(
           color: Color(0xFFFFF8DE),
           child: Text(
-            'Request pricing for bulk learning materials or a tailored programme. This request does not place an order or charge a payment. Our team will review the details and respond using the contact information below.',
+            'Request pricing for bulk learning materials or a tailored programme. This request does not place an order or charge a payment. Requests are saved on this device for demo admin review; no email is sent.',
             style: TextStyle(height: 1.5),
           ),
         ),
@@ -92,10 +108,11 @@ class _QuoteRequestPageState extends State<QuoteRequestPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            '${line.product.name} · ${line.product.digital ? 'Digital' : 'Physical'}',
+                            '${line.product.name} · ${line.product.category}',
                           ),
                         ),
-                        if (directProduct != null)
+                        if (directProduct != null ||
+                            line.product.category == 'Service')
                           IconButton(
                             tooltip: 'Decrease quantity',
                             onPressed: _quantity > 1
@@ -104,7 +121,8 @@ class _QuoteRequestPageState extends State<QuoteRequestPage> {
                             icon: const Icon(Icons.remove_circle_outline),
                           ),
                         Text('× ${line.quantity}'),
-                        if (directProduct != null)
+                        if (directProduct != null ||
+                            line.product.category == 'Service')
                           IconButton(
                             tooltip: 'Increase quantity',
                             onPressed: () => setState(() => _quantity++),
@@ -502,8 +520,8 @@ class _QuoteEditDialogState extends State<_QuoteEditDialog> {
                 ],
                 onChanged: (value) {
                   if (value != null) {
-                      setState(() => _status = value);
-                    }
+                    setState(() => _status = value);
+                  }
                 },
               ),
               const SizedBox(height: 12),

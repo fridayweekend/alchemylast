@@ -24,16 +24,16 @@ class _StorePageState extends State<StorePage> {
     children: [
       ClipRRect(
         borderRadius: BorderRadius.circular(22),
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).width < 420 ? 320 : 230,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
                 'assets/images/workshop_group_activity.jpeg',
                 fit: BoxFit.cover,
               ),
-              const DecoratedBox(
+            ),
+            const Positioned.fill(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.centerLeft,
@@ -42,41 +42,41 @@ class _StorePageState extends State<StorePage> {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(28),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Learning that continues beyond the workshop.',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: MediaQuery.sizeOf(context).width < 420
-                            ? 21
-                            : 25,
-                        fontWeight: FontWeight.w800,
-                      ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Learning that continues beyond the workshop.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: MediaQuery.sizeOf(context).width < 420
+                          ? 21
+                          : 25,
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(height: 10),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 520),
-                      child: const Text(
-                        'Explore practical resources for reflection, communication and team learning.',
-                        style: TextStyle(color: Colors.white, height: 1.5),
-                      ),
+                  ),
+                  const SizedBox(height: 10),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: const Text(
+                      'Explore practical resources for reflection, communication and team learning.',
+                      style: TextStyle(color: Colors.white, height: 1.5),
                     ),
-                    const SizedBox(height: 18),
-                    FilledButton.icon(
-                      onPressed: () => go(context, '/cart'),
-                      icon: const Icon(Icons.shopping_bag_outlined),
-                      label: const Text('View cart'),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 18),
+                  FilledButton.icon(
+                    onPressed: () => go(context, '/cart'),
+                    icon: const Icon(Icons.shopping_bag_outlined),
+                    label: const Text('View cart'),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       const SizedBox(height: 24),
@@ -156,8 +156,10 @@ class _ProductCard extends StatelessWidget {
         const SizedBox(height: 8),
         Text(product.description, maxLines: 3, overflow: TextOverflow.ellipsis),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          spacing: 16,
+          runSpacing: 8,
           children: [
             Text(
               money(product.price),

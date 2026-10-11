@@ -26,8 +26,23 @@ class ProgressBarCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w700, color: deepBlue)),
-              Text('$percent%', style: const TextStyle(fontWeight: FontWeight.w900, color: deepBlue)),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: deepBlue,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '$percent%',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: deepBlue,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),

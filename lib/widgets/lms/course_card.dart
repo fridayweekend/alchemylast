@@ -99,7 +99,9 @@ class CourseCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: progressFor(course) > 0 ? (onContinueCourse ?? onViewCourse) : onViewCourse,
+              onPressed: progressFor(course) > 0
+                  ? (onContinueCourse ?? onViewCourse)
+                  : onViewCourse,
               child: Text(
                 progressFor(course) > 0 ? 'Continue Course' : 'View Course',
               ),
@@ -129,4 +131,3 @@ class _InfoItem extends StatelessWidget {
     );
   }
 }
-

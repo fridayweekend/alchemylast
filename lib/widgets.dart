@@ -15,6 +15,7 @@ const navItems = <String, String>{
   'Login': '/login',
   'Register': '/register',
   'Cart': '/cart',
+  'Sitemap': '/sitemap',
 };
 
 const corporateNavItems = <String, String>{
@@ -41,19 +42,43 @@ class SiteShell extends StatelessWidget {
     final compactHeader = MediaQuery.sizeOf(context).width < 440;
     final signedIn = AuthPrototypeStore.instance.isSignedIn;
     final role = AuthPrototypeStore.instance.role;
+    final canViewCorporateWebsite =
+        signedIn && const {'Employer', 'Admin'}.contains(role);
+    final visibleCorporateNavItems = canViewCorporateWebsite
+        ? corporateNavItems
+        : <String, String>{
+            'Individual Coaching': '/coaching',
+            'Organizations': '/organizations',
+            'Public Programmes': '/programmes',
+            'Impact Stories': '/impact',
+          };
     final workspaceRoute = switch (role) {
       'Admin' => '/admin',
       'Employer' => '/employer',
+      'Learner' => '/dashboard',
+      'Trainer' => '/trainer-dashboard',
       _ => null,
     };
     final workspaceLabel = switch (role) {
       'Admin' => 'Admin portal',
       'Employer' => 'Employer portal',
+      'Learner' => 'Learner dashboard',
+      'Trainer' => 'Trainer dashboard',
       _ => null,
     };
     void signOut() {
       AuthPrototypeStore.instance.signOut();
       Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    }
+
+    void goBackOrWorkspace() {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else if (workspaceRoute != null) {
+        Navigator.pushReplacementNamed(context, workspaceRoute);
+      } else {
+        Navigator.pushReplacementNamed(context, '/');
+      }
     }
 
     return Scaffold(
@@ -68,7 +93,7 @@ class SiteShell extends StatelessWidget {
                       IconButton(
                         tooltip: 'Go back',
                         icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.maybePop(context),
+                        onPressed: goBackOrWorkspace,
                       ),
                     IconButton(
                       tooltip: 'Open navigation',
@@ -123,7 +148,7 @@ class SiteShell extends StatelessWidget {
                 if (Navigator.canPop(context))
                   IconButton(
                     tooltip: 'Go back',
-                    onPressed: () => Navigator.maybePop(context),
+                    onPressed: goBackOrWorkspace,
                     icon: const Icon(Icons.arrow_back),
                   ),
                 for (final item in navItems.entries.take(3))
@@ -138,30 +163,31 @@ class SiteShell extends StatelessWidget {
                       ),
                     ),
                   ),
-                PopupMenuButton<String>(
-                  tooltip: 'Corporate pages',
-                  onSelected: (value) => go(context, value),
-                  itemBuilder: (_) => [
-                    for (final item in corporateNavItems.entries)
-                      PopupMenuItem(value: item.value, child: Text(item.key)),
-                  ],
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Corporate',
-                          style: TextStyle(
-                            fontWeight: corporateNavItems.containsValue(route)
-                                ? FontWeight.w900
-                                : FontWeight.w500,
+                if (visibleCorporateNavItems.isNotEmpty)
+                  PopupMenuButton<String>(
+                    tooltip: 'Corporate pages',
+                    onSelected: (value) => go(context, value),
+                    itemBuilder: (_) => [
+                      for (final item in visibleCorporateNavItems.entries)
+                        PopupMenuItem(value: item.value, child: Text(item.key)),
+                    ],
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Corporate',
+                            style: TextStyle(
+                              fontWeight: corporateNavItems.containsValue(route)
+                                  ? FontWeight.w900
+                                  : FontWeight.w500,
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.arrow_drop_down, size: 19),
-                      ],
+                          const Icon(Icons.arrow_drop_down, size: 19),
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 for (final item
                     in navItems.entries
                         .skip(3)
@@ -297,41 +323,63 @@ class SiteShell extends StatelessWidget {
                           },
                         ),
                       ),
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-                      child: Text(
-                        'CORPORATE WEBSITE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                          color: purple,
-                        ),
-                      ),
-                    ),
-                    for (final item in corporateNavItems.entries)
-                      Material(
-                        type: MaterialType.transparency,
-                        child: ListTile(
-                          title: Text(item.key),
-                          selected: route == item.value,
-                          selectedColor: deepBlue,
-                          selectedTileColor: softYellow.withValues(alpha: .28),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    if (visibleCorporateNavItems.isNotEmpty) ...[
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                        child: Text(
+                          'CORPORATE WEBSITE',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                            color: purple,
                           ),
-                          onTap: () {
-                            Navigator.pop(context);
-                            go(context, item.value);
-                          },
                         ),
                       ),
+                      for (final item in visibleCorporateNavItems.entries)
+                        Material(
+                          type: MaterialType.transparency,
+                          child: ListTile(
+                            title: Text(item.key),
+                            selected: route == item.value,
+                            selectedColor: deepBlue,
+                            selectedTileColor: softYellow.withValues(alpha: .28),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              go(context, item.value);
+                            },
+                          ),
+                        ),
+                    ],
                   ],
                 ),
               ),
             ),
       body: SingleChildScrollView(
-        child: Column(children: [child, const SiteFooter()]),
+        child: Column(
+          children: [
+            ListenableBuilder(
+              listenable: CommercePrototypeStore.instance,
+              builder: (context, _) {
+                final error = CommercePrototypeStore.instance.storageError;
+                return error == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          error,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+              },
+            ),
+            child,
+            const SiteFooter(),
+          ],
+        ),
       ),
     );
   }
@@ -443,7 +491,7 @@ class InfoCard extends StatelessWidget {
         ),
       ],
     ),
-    child: child,
+    child: Material(type: MaterialType.transparency, child: child),
   );
 }
 
