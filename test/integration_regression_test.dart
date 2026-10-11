@@ -5,6 +5,7 @@ import 'package:publicwebsite/main.dart';
 import 'package:publicwebsite/shared/auth_prototype_store.dart';
 import 'package:publicwebsite/commerce/commerce_prototype_store.dart';
 import 'package:publicwebsite/data/progress_store.dart';
+import 'package:publicwebsite/screens/lms/learner_dashboard_screen.dart';
 
 void main() {
   final auth = AuthPrototypeStore.instance;
@@ -145,10 +146,20 @@ void main() {
     tester,
   ) async {
     auth.signIn('learner@mtalchemy.demo', 'AlchemyLearner!26');
+    enrollCourse('ei-fundamentals');
     await tester.pumpWidget(const MtAlchemyApp());
-    tester
-        .state<NavigatorState>(find.byType(Navigator).first)
-        .pushNamed('/quiz', arguments: 'ei-fundamentals');
+    final navigator = tester.state<NavigatorState>(
+      find.byType(Navigator).first,
+    );
+    navigator.push(
+      MaterialPageRoute<void>(builder: (_) => const LearnerDashboardScreen()),
+    );
+    await tester.pumpAndSettle();
+    final viewCourse = find.widgetWithText(FilledButton, 'View Course');
+    await tester.ensureVisible(viewCourse);
+    await tester.tap(viewCourse);
+    await tester.pumpAndSettle();
+    navigator.pushNamed('/quiz', arguments: 'ei-fundamentals');
     await tester.pumpAndSettle();
     Future<void> click(String label) async {
       final target = find.text(label).last;
@@ -174,6 +185,29 @@ void main() {
     await click('Next');
     await click('Pause, breathe and ask for specific examples');
     await click('Submit');
+    expect(completedCourses, contains('ei-fundamentals'));
+    navigator.pop();
+    await tester.pumpAndSettle();
+    navigator.pop();
+    await tester.pumpAndSettle();
+    final completedStat = find
+        .ancestor(of: find.text('Completed'), matching: find.byType(Column))
+        .first;
+    expect(
+      find.descendant(of: completedStat, matching: find.text('1')),
+      findsOneWidget,
+    );
+    final inProgressStat = find
+        .ancestor(of: find.text('In Progress'), matching: find.byType(Column))
+        .first;
+    expect(
+      find.descendant(of: inProgressStat, matching: find.text('0')),
+      findsOneWidget,
+    );
+    expect(find.text('Course completed!'), findsOneWidget);
+    await saveProgress();
+    selectLearner(null);
+    selectLearner('learner@mtalchemy.demo');
     expect(completedCourses, contains('ei-fundamentals'));
     expect(tester.takeException(), isNull);
   });

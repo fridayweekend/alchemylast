@@ -69,7 +69,9 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
         actions: [
           IconButton(
             tooltip: 'Browse learning hub',
-            onPressed: () => Navigator.pushNamed(context, '/hub'),
+            onPressed: () => Navigator.pushNamed(context, '/hub').then((_) {
+              if (mounted) setState(() {});
+            }),
             icon: const Icon(Icons.explore_outlined),
           ),
           IconButton(
@@ -189,11 +191,14 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
                           ).then((_) {
                             if (mounted) setState(() {});
                           }),
-                      onViewCourse: () => Navigator.pushNamed(
-                        context,
-                        '/course-detail',
-                        arguments: enrolled.id,
-                      ),
+                      onViewCourse: () =>
+                          Navigator.pushNamed(
+                            context,
+                            '/course-detail',
+                            arguments: enrolled.id,
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          }),
                     ),
                   ),
                 for (final id in completedCourses)
@@ -225,9 +230,9 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: const Color(0xFFE8E5F0)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 28,
                         backgroundColor: Color(0xFFECE9FF),
                         child: Icon(
@@ -236,21 +241,25 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
                           size: 30,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Keep Going!',
-                              style: TextStyle(
+                              completedCourses.isEmpty
+                                  ? 'Keep Going!'
+                                  : 'Course completed!',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
-                              'Complete your first course to unlock your first achievement.',
+                              completedCourses.isEmpty
+                                  ? 'Complete your first course to unlock your first achievement.'
+                                  : 'You earned your first course achievement. Your certificate is ready above.',
                             ),
                           ],
                         ),
