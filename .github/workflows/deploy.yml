@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - update-mt-alchemy
   workflow_dispatch:
 
 permissions:
