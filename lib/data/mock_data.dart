@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class Course {
   final String id;
   final String title;
@@ -9,6 +12,19 @@ class Course {
   final double price;
   final List<String> modules;
   final int progress;
+  final List<String> prerequisites;
+  final String? pdfName;
+  final String? pdfBase64;
+  final List<Map<String, dynamic>> quiz;
+  String get imageAsset =>
+      'assets/images/${switch (id) {
+        'mindfulness' || 'workplace-wellbeing' => 'impact_teachers_retreat.jpeg',
+        'leadership' || 'organisational-development' => 'trainer_presenting.jpeg',
+        'communication' => 'online_team_learning.jpg',
+        'team-effectiveness' => 'workshop_team_creativity.jpeg',
+        'personal-development' => 'impact_student_interaction.jpeg',
+        _ => 'workshop_eq_facilitator.jpeg',
+      }}';
 
   const Course({
     required this.id,
@@ -21,10 +37,16 @@ class Course {
     required this.price,
     required this.modules,
     this.progress = 0,
+    this.prerequisites = const [],
+    this.pdfName,
+    this.pdfBase64,
+    this.quiz = const [],
   });
 }
 
-const List<Course> mockCourses = [
+final List<Course> mockCourses = [...seedCourses];
+
+const List<Course> seedCourses = [
   Course(
     id: 'ei-fundamentals',
     title: 'Emotional Intelligence Fundamentals',
@@ -64,6 +86,7 @@ const List<Course> mockCourses = [
   ),
   Course(
     id: 'leadership',
+    prerequisites: ['ei-fundamentals'],
     title: 'Leadership Essentials',
     shortDescription:
         'Develop practical leadership skills for communication, decision-making, and team growth.',
@@ -154,6 +177,7 @@ const List<Course> mockCourses = [
   ),
   Course(
     id: 'organisational-development',
+    prerequisites: ['leadership'],
     title: 'Organisational Development',
     shortDescription:
         'Understand people, culture, and change strategies that help organisations grow effectively.',
@@ -171,3 +195,79 @@ const List<Course> mockCourses = [
     ],
   ),
 ];
+
+Future<void> loadCourseCatalogue() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString('mta_course_catalogue_v1');
+  if (raw == null) return;
+  final decoded = (jsonDecode(raw) as List).map((value) {
+    final c = value as Map<String, dynamic>;
+    return Course(
+      id: c['id'],
+      title: c['title'],
+      shortDescription: c['description'],
+      instructor: c['instructor'],
+      duration: c['duration'],
+      level: c['level'],
+      rating: (c['rating'] as num).toDouble(),
+      price: (c['price'] as num).toDouble(),
+      modules: List<String>.from(c['modules']),
+      prerequisites: List<String>.from(c['prerequisites'] ?? []),
+      pdfName: c['pdfName'],
+      pdfBase64: c['pdfBase64'],
+      quiz: List<Map<String, dynamic>>.from(c['quiz'] ?? []),
+    );
+  }).toList();
+  mockCourses
+    ..clear()
+    ..addAll(decoded);
+}
+
+Future<void> saveCourseCatalogue(List<Course> courses) async {
+  final byId = {for (final course in courses) course.id: course};
+  bool cycle(String id, Set<String> visiting) {
+    if (!visiting.add(id)) return true;
+    for (final prerequisite in byId[id]!.prerequisites) {
+      if (!byId.containsKey(prerequisite) || cycle(prerequisite, {...visiting}))
+        return true;
+    }
+    return false;
+  }
+
+  if (byId.length != courses.length ||
+      courses.any((c) => c.modules.isEmpty || cycle(c.id, {}))) {
+    throw ArgumentError(
+      'Courses need modules and prerequisites without circular dependencies.',
+    );
+  }
+
+  final prefs = await SharedPreferences.getInstance();
+  final ok = await prefs.setString(
+    'mta_course_catalogue_v1',
+    jsonEncode(
+      courses
+          .map(
+            (c) => {
+              'id': c.id,
+              'title': c.title,
+              'description': c.shortDescription,
+              'instructor': c.instructor,
+              'duration': c.duration,
+              'level': c.level,
+              'rating': c.rating,
+              'price': c.price,
+              'modules': c.modules,
+              'prerequisites': c.prerequisites,
+              'pdfName': c.pdfName,
+              'pdfBase64': c.pdfBase64,
+              'quiz': c.quiz,
+            },
+          )
+          .toList(),
+    ),
+  );
+  if (!ok) throw StateError('Course changes could not be saved.');
+  mockCourses
+    ..clear()
+    ..addAll(courses);
+}

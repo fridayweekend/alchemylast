@@ -1,3 +1,5 @@
+import '../../data/mock_data.dart';
+import '../../shared/learning_navigation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/progress_store.dart';
@@ -38,7 +40,7 @@ class QuizQuestion {
   final String? displayAnswer;
 }
 
-const _questions = [
+const _sampleQuestions = [
   QuizQuestion(
     type: QuestionType.multipleChoice,
     prompt: 'Which skill is the foundation of emotional intelligence?',
@@ -108,6 +110,39 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   static const _passMark = 0.6;
+  late final List<QuizQuestion> _questions = () {
+    final course = mockCourses.firstWhere((c) => c.id == widget.courseId);
+    if (course.quiz.isNotEmpty) {
+      return course.quiz
+          .map(
+            (q) => QuizQuestion(
+              type: QuestionType.multipleChoice,
+              prompt: q['prompt'] as String,
+              options: List<String>.from(q['options']),
+              correct: [q['answer'] as String],
+              explanation:
+                  'Review the course material and the correct answer above.',
+            ),
+          )
+          .toList();
+    }
+    if (course.id == 'ei-fundamentals') return _sampleQuestions;
+    return course.modules
+        .map(
+          (m) => QuizQuestion(
+            type: QuestionType.multipleChoice,
+            prompt: 'Which practice supports $m?',
+            options: [
+              'Reflect, practise and seek constructive feedback',
+              'Avoid feedback and repeat the same habits',
+            ],
+            correct: ['Reflect, practise and seek constructive feedback'],
+            explanation:
+                'Applying the learning and reflecting on feedback supports ${course.title}.',
+          ),
+        )
+        .toList();
+  }();
 
   final _formKey = GlobalKey<FormState>();
   final _shortController = TextEditingController();
@@ -188,13 +223,41 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Assessment')),
+    appBar: AppBar(
+      actions: const [LearningNavigation()],
+      title: const Text('Assessment'),
+    ),
     body: SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
-          child: _submitted ? _result(context) : _question(context),
+          child:
+              progressFor(
+                    mockCourses.firstWhere((c) => c.id == widget.courseId),
+                  ) <
+                  100
+              ? Column(
+                  children: [
+                    const Icon(Icons.auto_stories, size: 64),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Complete all lessons before taking the assessment.',
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: () => Navigator.pushReplacementNamed(
+                        context,
+                        '/course-player',
+                        arguments: widget.courseId,
+                      ),
+                      child: const Text('Continue learning'),
+                    ),
+                  ],
+                )
+              : _submitted
+              ? _result(context)
+              : _question(context),
         ),
       ),
     ),

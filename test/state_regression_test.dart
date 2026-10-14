@@ -63,15 +63,15 @@ void main() {
   test('progress survives reload and is isolated between learners', () async {
     selectLearner('one@example.test');
     enrollCourse('mindfulness');
-    completedLessons['mindfulness'] = {0, 1};
-    completeCourse('mindfulness');
+    completedLessons['mindfulness'] = {for (var i = 0; i < 20; i++) i};
+    completeCourse('mindfulness', score: 80);
     await saveProgress();
     selectLearner('two@example.test');
     expect(completedCourses, isEmpty);
     expect(enrolledCourses, isEmpty);
     selectLearner('one@example.test');
     expect(completedCourses, contains('mindfulness'));
-    expect(completedLessons['mindfulness'], {0, 1});
+    expect(completedLessons['mindfulness'], hasLength(20));
   });
 
   test(

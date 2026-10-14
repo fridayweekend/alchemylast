@@ -1,3 +1,4 @@
+import '../data/mock_data.dart';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -22,13 +23,23 @@ class AdminDashboardPage extends StatelessWidget {
         const InfoCard(
           color: deepBlue,
           child: Text(
-            'Manage products, orders and inventory for the MT Alchemy platform.',
+            'Manage employee training, course resources, assessments and platform operations.',
             style: TextStyle(color: Colors.white, fontSize: 20, height: 1.5),
           ),
         ),
         const SizedBox(height: 20),
         ResponsiveGrid(
           children: [
+            MetricCard(
+              label: 'Training courses',
+              value: '${mockCourses.length}',
+              icon: Icons.school_outlined,
+            ),
+            MetricCard(
+              label: 'PDF resources',
+              value: '${mockCourses.where((c) => c.pdfName != null).length}',
+              icon: Icons.picture_as_pdf_outlined,
+            ),
             MetricCard(
               label: 'Products',
               value: '${_store.products.length}',
@@ -64,9 +75,18 @@ class AdminDashboardPage extends StatelessWidget {
             ),
           ],
         ),
-        const SectionTitle('Commerce administration', eyebrow: 'Quick actions'),
+        const SectionTitle(
+          'Training and administration',
+          eyebrow: 'Quick actions',
+        ),
         ResponsiveGrid(
           children: [
+            PortalAction(
+              title: 'Course management',
+              subtitle: 'Create courses, upload PDFs and build quizzes.',
+              icon: Icons.school_outlined,
+              route: '/admin/courses',
+            ),
             PortalAction(
               title: 'Product management',
               subtitle: 'Add products, set stock and publish items.',
@@ -99,11 +119,10 @@ class AdminDashboardPage extends StatelessWidget {
               route: '/admin/products',
             ),
             PortalAction(
-              title: 'Organization workspace',
-              subtitle:
-                  'Open the employer tools used to manage course assignments.',
+              title: 'My learning',
+              subtitle: 'Open your personal training dashboard.',
               icon: Icons.business_outlined,
-              route: '/employer',
+              route: '/dashboard',
             ),
           ],
         ),
@@ -112,7 +131,7 @@ class AdminDashboardPage extends StatelessWidget {
           eyebrow: 'Integration points',
         ),
         const Text(
-          'Users, organizations and courses are owned by the authentication and LMS modules. This admin area is ready to connect to those shared records during integration.',
+          'Course changes are saved on this browser. Manage PDFs, assessments and prerequisites in Course management. Employer accounts manage employee assignments and reports.',
         ),
         const SizedBox(height: 22),
         OutlinedButton.icon(

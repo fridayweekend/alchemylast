@@ -1,3 +1,4 @@
+import '../../shared/learning_navigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
@@ -93,6 +94,7 @@ class TrainerDashboardScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          const LearningNavigation(),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
@@ -134,6 +136,7 @@ class TrainerDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Trainer Dashboard'),
         actions: [
+          const LearningNavigation(),
           IconButton(
             tooltip: 'Browse learning hub',
             onPressed: () => Navigator.pushNamed(context, '/hub'),
@@ -172,7 +175,7 @@ class TrainerDashboardScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Welcome, Trainer',
+                        'Welcome, ${AuthPrototypeStore.instance.displayName ?? 'Trainer'}',
                         style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(color: Colors.white),
                       ),
@@ -185,7 +188,17 @@ class TrainerDashboardScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.asset(
+                    'assets/images/trainer_presenting.jpeg',
+                    height: 220,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text('Sample training overview'),
                 LayoutBuilder(
                   builder: (context, box) {
                     final cols = box.maxWidth >= 900

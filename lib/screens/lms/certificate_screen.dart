@@ -1,3 +1,4 @@
+import '../../shared/learning_navigation.dart';
 import '../../shared/file_export.dart';
 import '../../shared/report_document.dart';
 import '../../shared/auth_prototype_store.dart';
@@ -47,7 +48,10 @@ class CertificateScreen extends StatelessWidget {
     final course = _course;
     if (!completedCourses.contains(course.id)) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Certificate')),
+        appBar: AppBar(
+          actions: const [LearningNavigation()],
+          title: const Text('Certificate'),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -70,13 +74,17 @@ class CertificateScreen extends StatelessWidget {
         ),
       );
     }
-    final now = DateTime.now();
+    final now =
+        DateTime.tryParse(completionDates[course.id] ?? '') ?? DateTime.now();
     final date = '${now.day} ${_months[now.month - 1]} ${now.year}';
     final certId =
-        'MTA-${now.year}-${course.id.substring(0, 2).toUpperCase()}-0001';
+        'MTA-${now.year}-${course.id.toUpperCase()}-${(AuthPrototypeStore.instance.email ?? '').codeUnits.fold<int>(0, (a, b) => (a * 31 + b) & 0x7fffffff).toRadixString(36).toUpperCase()}';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Certificate')),
+      appBar: AppBar(
+        actions: const [LearningNavigation()],
+        title: const Text('Certificate'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Center(

@@ -1,92 +1,57 @@
 import 'package:flutter/material.dart';
-
 import '../../data/mock_data.dart';
 import '../../data/progress_store.dart';
 import '../../widgets/lms/course_card.dart';
 import '../../shared/auth_prototype_store.dart';
+import '../../shared/learning_navigation.dart';
+import '../../theme.dart';
 
 class LearnerDashboardScreen extends StatefulWidget {
-  final String courseId;
-  final bool enroll;
-
   const LearnerDashboardScreen({
     super.key,
     this.courseId = 'ei-fundamentals',
     this.enroll = false,
   });
-
+  final String courseId;
+  final bool enroll;
   @override
   State<LearnerDashboardScreen> createState() => _LearnerDashboardScreenState();
 }
 
 class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
-  final _profileFormKey = GlobalKey<FormState>();
-
-  final nameController = TextEditingController(
-    text: AuthPrototypeStore.instance.displayName ?? 'Learner',
-  );
-  final emailController = TextEditingController(
-    text: AuthPrototypeStore.instance.email ?? 'learner@example.com',
-  );
-  final preferencesController = TextEditingController(
-    text: 'Leadership, Communication',
-  );
-
-  Course get course {
-    return mockCourses.firstWhere(
-      (item) => item.id == widget.courseId,
-      orElse: () => mockCourses.first,
-    );
-  }
-
+  String filter = 'In progress';
   @override
   void initState() {
     super.initState();
     if (widget.enroll) enrollCourse(widget.courseId);
   }
 
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    preferencesController.dispose();
-    super.dispose();
-  }
-
-  void continueCourse() {
-    Navigator.pushNamed(context, '/course-player', arguments: course.id).then((
-      _,
-    ) {
-      if (mounted) setState(() {});
-    });
+  Future<void> open(String route, {Object? arguments}) async {
+    await Navigator.pushNamed(context, route, arguments: arguments);
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    final mine = mockCourses
+        .where((c) => enrolledCourses.contains(c.id))
+        .toList();
+    final finished = mine
+        .where((c) => completedCourses.contains(c.id))
+        .toList();
+    final active = mine.where((c) => !completedCourses.contains(c.id)).toList();
+    final suggested = mockCourses
+        .where(
+          (c) =>
+              !enrolledCourses.contains(c.id) &&
+              c.prerequisites.every(completedCourses.contains),
+        )
+        .take(3)
+        .toList();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Learner Dashboard'),
-        actions: [
-          IconButton(
-            tooltip: 'Browse learning hub',
-            onPressed: () => Navigator.pushNamed(context, '/hub').then((_) {
-              if (mounted) setState(() {});
-            }),
-            icon: const Icon(Icons.explore_outlined),
-          ),
-          IconButton(
-            tooltip: 'Sign out',
-            onPressed: () {
-              AuthPrototypeStore.instance.signOut();
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
+        actions: const [LearningNavigation()],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -97,252 +62,223 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(28),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16105B),
-                    borderRadius: BorderRadius.circular(24),
+                    color: deepBlue,
+                    borderRadius: BorderRadius.circular(28),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: LayoutBuilder(
+                    builder: (context, box) {
+                      final intro = Padding(
+                        padding: const EdgeInsets.all(28),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'YOUR LEARNING JOURNEY',
+                              style: TextStyle(
+                                color: softYellow,
+                                letterSpacing: 2,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Welcome, ${AuthPrototypeStore.instance.displayName ?? 'Learner'}',
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Small steps. Stronger skills.\nBuild your future, one course at a time.',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 18,
+                                height: 1.6,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: softYellow,
+                                foregroundColor: deepBlue,
+                              ),
+                              onPressed: () => open('/hub'),
+                              icon: const Icon(Icons.explore_outlined),
+                              label: const Text('Explore courses'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return box.maxWidth < 700
+                          ? intro
+                          : Row(
+                              children: [
+                                Expanded(flex: 3, child: intro),
+                                Expanded(
+                                  flex: 2,
+                                  child: Image.asset(
+                                    'assets/images/workshop_group_activity.jpeg',
+                                    height: 310,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ],
+                            );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+                LayoutBuilder(
+                  builder: (context, box) => Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
                     children: [
-                      Text(
-                        'Welcome, ${nameController.text}',
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(color: Colors.white),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Keep learning and growing your skills.',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyLarge?.copyWith(color: Colors.white),
-                      ),
+                      for (final stat in [
+                        ('Enrolled', mine.length, Icons.menu_book_outlined),
+                        (
+                          'In Progress',
+                          active.length,
+                          Icons.play_circle_outline,
+                        ),
+                        ('Completed', finished.length, Icons.task_alt),
+                        (
+                          'Certificates',
+                          finished.length,
+                          Icons.workspace_premium_outlined,
+                        ),
+                      ])
+                        SizedBox(
+                          width:
+                              (box.maxWidth - (box.maxWidth < 650 ? 16 : 48)) /
+                              (box.maxWidth < 650 ? 2 : 4),
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(stat.$3, color: purple, size: 30),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '${stat.$2}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineMedium,
+                                  ),
+                                  Text(stat.$1),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 28),
-
+                const SizedBox(height: 32),
                 Text(
                   'My Learning',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),
-
-                Row(
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
-                    Expanded(
-                      child: _statCard(
-                        context,
-                        icon: Icons.menu_book_outlined,
-                        value: enrolledCourses.length.toString(),
-                        label: 'Enrolled',
+                    for (final label in [
+                      'In progress',
+                      'Completed',
+                      'Certificates',
+                    ])
+                      ChoiceChip(
+                        label: Text(label),
+                        selected: filter == label,
+                        onSelected: (_) => setState(() => filter = label),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _statCard(
-                        context,
-                        icon: Icons.play_circle_outline,
-                        value: enrolledCourses
-                            .difference(completedCourses)
-                            .length
-                            .toString(),
-                        label: 'In Progress',
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _statCard(
-                        context,
-                        icon: Icons.check_circle_outline,
-                        value: completedCourses.length.toString(),
-                        label: 'Completed',
-                      ),
-                    ),
                   ],
                 ),
-
-                const SizedBox(height: 32),
-
-                Text(
-                  'Continue Learning',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-
-                if (enrolledCourses.isEmpty)
-                  const Text(
-                    'No courses enrolled yet. Browse the Learning Hub to get started.',
-                  ),
-                for (final enrolled in mockCourses.where(
-                  (item) => enrolledCourses.contains(item.id),
-                ))
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: CourseCard(
-                      course: enrolled,
-                      onContinueCourse: () =>
-                          Navigator.pushNamed(
-                            context,
-                            '/course-player',
-                            arguments: enrolled.id,
-                          ).then((_) {
-                            if (mounted) setState(() {});
-                          }),
-                      onViewCourse: () =>
-                          Navigator.pushNamed(
-                            context,
-                            '/course-detail',
-                            arguments: enrolled.id,
-                          ).then((_) {
-                            if (mounted) setState(() {});
-                          }),
+                const SizedBox(height: 20),
+                if ((filter == 'In progress' ? active : finished).isEmpty)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            filter == 'In progress'
+                                ? Icons.auto_stories
+                                : Icons.workspace_premium_outlined,
+                            size: 44,
+                            color: purple,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            filter == 'In progress'
+                                ? 'Your next chapter starts here.'
+                                : 'Your achievements will appear here.',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const Text(
+                            'Explore a course, complete the lessons and pass its assessment.',
+                          ),
+                          TextButton(
+                            onPressed: () => open('/hub'),
+                            child: const Text('Browse learning hub'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                for (final id in completedCourses)
-                  TextButton.icon(
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      '/certificate',
-                      arguments: {'courseId': id},
-                    ),
-                    icon: const Icon(Icons.workspace_premium),
-                    label: Text(
-                      'View certificate: ${mockCourses.firstWhere((c) => c.id == id, orElse: () => mockCourses.first).title}',
-                    ),
-                  ),
-
-                const SizedBox(height: 32),
-
-                Text(
-                  'Achievements',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE8E5F0)),
-                  ),
-                  child: Row(
-                    children: [
-                      const CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Color(0xFFECE9FF),
-                        child: Icon(
-                          Icons.workspace_premium_outlined,
-                          color: Color(0xFF7655B7),
-                          size: 30,
+                if (filter != 'Certificates')
+                  grid(filter == 'In progress' ? active : finished),
+                if (filter == 'Certificates')
+                  for (final course in finished)
+                    Card(
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(20),
+                        leading: const Icon(
+                          Icons.workspace_premium,
+                          color: purple,
+                          size: 40,
+                        ),
+                        title: Text(course.title),
+                        subtitle: const Text(
+                          'Training completed · Certificate available',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => open(
+                          '/certificate',
+                          arguments: {'courseId': course.id},
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              completedCourses.isEmpty
-                                  ? 'Keep Going!'
-                                  : 'Course completed!',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              completedCourses.isEmpty
-                                  ? 'Complete your first course to unlock your first achievement.'
-                                  : 'You earned your first course achievement. Your certificate is ready above.',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
+                    ),
                 const SizedBox(height: 32),
-
                 Text(
-                  'Profile',
+                  'Recommended next',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
-                const SizedBox(height: 16),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE8E5F0)),
-                  ),
-                  child: Form(
-                    key: _profileFormKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextFormField(
-                          controller: nameController,
-                          decoration: const InputDecoration(labelText: 'Name'),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Name is required';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(labelText: 'Email'),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Email is required';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: preferencesController,
-                          decoration: const InputDecoration(
-                            labelText: 'Learning Preferences',
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        OutlinedButton(
-                          onPressed: () {
-                            if (_profileFormKey.currentState!.validate()) {
-                              setState(() {});
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Profile updated'),
-                                ),
-                              );
-                            }
-                          },
-                          child: const Text('Save Profile'),
-                        ),
-                      ],
+                const SizedBox(height: 8),
+                const Text(
+                  'Courses you are ready to start, based on your completed prerequisites.',
+                ),
+                const SizedBox(height: 20),
+                grid(suggested),
+                const SizedBox(height: 32),
+                Card(
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      child: Icon(Icons.person_outline),
                     ),
+                    title: Text(
+                      AuthPrototypeStore.instance.displayName ?? 'My profile',
+                    ),
+                    subtitle: Text(AuthPrototypeStore.instance.email ?? ''),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => open('/profile'),
                   ),
                 ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -351,28 +287,28 @@ class _LearnerDashboardScreenState extends State<LearnerDashboardScreen> {
     );
   }
 
-  Widget _statCard(
-    BuildContext context, {
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8E5F0)),
-      ),
-      child: Column(
+  Widget grid(List<Course> courses) => LayoutBuilder(
+    builder: (context, box) {
+      final count = box.maxWidth >= 900
+          ? 3
+          : box.maxWidth >= 600
+          ? 2
+          : 1;
+      return Wrap(
+        spacing: 20,
+        runSpacing: 20,
         children: [
-          Icon(icon, size: 30, color: const Color(0xFF7655B7)),
-          const SizedBox(height: 10),
-          Text(value, style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 4),
-          Text(label),
+          for (final c in courses)
+            SizedBox(
+              width: (box.maxWidth - (count - 1) * 20) / count,
+              child: CourseCard(
+                course: c,
+                onViewCourse: () => open('/course-detail', arguments: c.id),
+                onContinueCourse: () => open('/course-player', arguments: c.id),
+              ),
+            ),
         ],
-      ),
-    );
-  }
+      );
+    },
+  );
 }

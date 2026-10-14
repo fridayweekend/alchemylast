@@ -1,10 +1,14 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:publicwebsite/main.dart';
 import 'package:publicwebsite/shared/auth_prototype_store.dart';
 
 void main() {
-  setUp(() => AuthPrototypeStore.instance.signOut());
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    AuthPrototypeStore.instance.signOut();
+  });
   tearDown(() => AuthPrototypeStore.instance.signOut());
 
   testWidgets('admin login opens the protected admin dashboard', (

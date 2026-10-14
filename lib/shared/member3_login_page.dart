@@ -87,7 +87,7 @@ class _Member3LoginPageState extends State<Member3LoginPage> {
     _ => '/dashboard',
   };
 
-  void _submit() {
+  void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final role = AuthPrototypeStore.instance.signIn(
       _email.text,
@@ -104,6 +104,8 @@ class _Member3LoginPageState extends State<Member3LoginPage> {
       );
       return;
     }
+    await AuthPrototypeStore.instance.loadProfile();
+    if (!mounted) return;
     final destination = widget.redirectRoute ?? _homeFor(role);
     Navigator.pushReplacementNamed(
       context,
@@ -243,7 +245,7 @@ class _Member3LoginPageState extends State<Member3LoginPage> {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Demo sign-in only. Replace this with Member 2’s authentication service before production.',
+                        'Demo workspace: use a demo account or register to explore.',
                         style: TextStyle(color: Colors.black54, height: 1.4),
                       ),
                       TextButton.icon(

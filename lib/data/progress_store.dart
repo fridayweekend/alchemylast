@@ -6,6 +6,7 @@ const lessonsPerCourse = 20;
 final Map<String, Set<int>> completedLessons = {};
 final Map<String, int> lastLesson = {};
 final Set<String> completedCourses = {};
+final Map<String, String> completionDates = {};
 final Set<String> enrolledCourses = {};
 SharedPreferences? _preferences;
 String? _learner;
@@ -26,6 +27,7 @@ void selectLearner(String? email) {
   completedLessons.clear();
   lastLesson.clear();
   completedCourses.clear();
+  completionDates.clear();
   enrolledCourses.clear();
   if (_learner == null) return;
   final prefs = _preferences;
@@ -36,16 +38,23 @@ void selectLearner(String? email) {
     completedLessons[e.substring(0, i)] = {
       for (final n in e.substring(i + 1).split(','))
         if (int.tryParse(n) case final int value)
-          if (value >= 0 && value < lessonsPerCourse) value,
+          if (value >= 0 && value < 400) value,
     };
   }
   for (final e in prefs?.getStringList('${prefix}last') ?? <String>[]) {
     final i = e.indexOf(':');
     if (i < 0) continue;
     lastLesson[e.substring(0, i)] = (int.tryParse(e.substring(i + 1)) ?? 0)
-        .clamp(0, lessonsPerCourse - 1);
+        .clamp(0, 399);
   }
   completedCourses.addAll(prefs?.getStringList('${prefix}completed') ?? []);
+  for (final entry
+      in prefs?.getStringList('${prefix}completion_dates') ?? <String>[]) {
+    final split = entry.indexOf('|');
+    if (split > 0) {
+      completionDates[entry.substring(0, split)] = entry.substring(split + 1);
+    }
+  }
   enrolledCourses.addAll(prefs?.getStringList('${prefix}enrolled') ?? []);
   final assigned = CommercePrototypeStore.instance.assignedCoursesFor(
     _learner!,
@@ -79,6 +88,10 @@ Future<void> saveProgress() async {
       prefs.setStringList('${prefix}done', done),
       prefs.setStringList('${prefix}last', last),
       prefs.setStringList('${prefix}completed', completed),
+      prefs.setStringList(
+        '${prefix}completion_dates',
+        completionDates.entries.map((e) => '${e.key}|${e.value}').toList(),
+      ),
       prefs.setStringList('${prefix}enrolled', enrolled),
     ]);
     progressStorageError = results.every((ok) => ok)
@@ -90,14 +103,28 @@ Future<void> saveProgress() async {
 }
 
 void enrollCourse(String courseId) {
+  final course = mockCourses.where((c) => c.id == courseId).firstOrNull;
+  if (course == null ||
+      !course.prerequisites.every(completedCourses.contains)) {
+    return;
+  }
   enrolledCourses.add(courseId);
   saveProgress();
 }
 
 void completeCourse(String courseId, {int? score}) {
+  final selected = mockCourses.where((c) => c.id == courseId).firstOrNull;
+  if (selected == null ||
+      score == null ||
+      score < 60 ||
+      !selected.prerequisites.every(completedCourses.contains) ||
+      progressFor(selected) < 100) {
+    return;
+  }
   enrolledCourses.add(courseId);
   completedCourses.add(courseId);
-  if (_learner != null && score != null) {
+  completionDates.putIfAbsent(courseId, () => DateTime.now().toIso8601String());
+  if (_learner != null) {
     final course = mockCourses.firstWhere((c) => c.id == courseId);
     CommercePrototypeStore.instance.updateLearningProgress(
       _learner!,
@@ -110,5 +137,7 @@ void completeCourse(String courseId, {int? score}) {
 }
 
 int progressFor(Course course) =>
-    ((completedLessons[course.id]?.length ?? 0) / lessonsPerCourse * 100)
+    ((completedLessons[course.id]?.length ?? 0) /
+            (course.modules.length * 4) *
+            100)
         .round();

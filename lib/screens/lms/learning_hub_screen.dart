@@ -1,3 +1,4 @@
+import '../../shared/learning_navigation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/mock_data.dart';
@@ -12,6 +13,7 @@ class LearningHubScreen extends StatefulWidget {
 
 class _LearningHubScreenState extends State<LearningHubScreen> {
   String selectedCategory = 'All';
+  String search = '';
 
   final categories = const [
     'All',
@@ -27,24 +29,35 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
 
   List<Course> get filteredCourses {
     if (selectedCategory == 'All') {
-      return mockCourses;
+      return mockCourses
+          .where(
+            (c) => ('${c.title} ${c.shortDescription}').toLowerCase().contains(
+              search,
+            ),
+          )
+          .toList();
     }
 
     return mockCourses.where((course) {
       final text = '${course.title} ${course.shortDescription}'.toLowerCase();
 
-      return text.contains(selectedCategory.toLowerCase().split(' ').first);
+      return text.contains(selectedCategory.toLowerCase().split(' ').first) &&
+          text.contains(search);
     }).toList();
   }
 
-  void openCourse(Course course) {
-    Navigator.pushNamed(context, '/course-detail', arguments: course.id);
+  Future<void> openCourse(Course course) async {
+    await Navigator.pushNamed(context, '/course-detail', arguments: course.id);
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Learning Hub')),
+      appBar: AppBar(
+        actions: const [LearningNavigation()],
+        title: const Text('Learning Hub'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -82,6 +95,15 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
 
                 const SizedBox(height: 32),
 
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Search courses',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (value) =>
+                      setState(() => search = value.trim().toLowerCase()),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   'Explore by category',
                   style: Theme.of(context).textTheme.headlineMedium,

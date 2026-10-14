@@ -37,7 +37,12 @@ class SiteShell extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: AuthPrototypeStore.instance,
+    builder: (context, _) => _buildShell(context),
+  );
+
+  Widget _buildShell(BuildContext context) {
     final desktop = MediaQuery.sizeOf(context).width >= 1500;
     final compactHeader = MediaQuery.sizeOf(context).width < 440;
     final signedIn = AuthPrototypeStore.instance.isSignedIn;
@@ -84,7 +89,7 @@ class SiteShell extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: desktop
+        leading: desktop && role != 'Admin'
             ? null
             : Builder(
                 builder: (context) => Row(
@@ -103,7 +108,9 @@ class SiteShell extends StatelessWidget {
                   ],
                 ),
               ),
-        leadingWidth: desktop ? null : (Navigator.canPop(context) ? 104 : 56),
+        leadingWidth: desktop && role != 'Admin'
+            ? null
+            : (Navigator.canPop(context) ? 104 : 56),
         toolbarHeight: 84,
         titleSpacing: desktop ? 36 : 16,
         title: InkWell(
@@ -116,8 +123,8 @@ class SiteShell extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 child: Image.asset(
                   'assets/images/logo_mt_alchemy.jpeg',
-                  width: 48,
-                  height: 48,
+                  width: 57.6,
+                  height: 57.6,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -250,7 +257,7 @@ class SiteShell extends StatelessWidget {
               ]
             : null,
       ),
-      drawer: desktop
+      drawer: desktop && role != 'Admin'
           ? null
           : Drawer(
               child: SafeArea(
@@ -268,6 +275,31 @@ class SiteShell extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (signedIn)
+                      ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: const Text('My profile'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          go(context, '/profile');
+                        },
+                      ),
+                    if (role == 'Admin') ...[
+                      for (final item in {
+                        'Courses': '/admin/courses',
+                        'Overview': '/admin',
+                        'Products': '/admin/products',
+                        'Orders': '/admin/orders',
+                      }.entries)
+                        ListTile(
+                          leading: const Icon(Icons.dashboard_outlined),
+                          title: Text(item.key),
+                          onTap: () {
+                            Navigator.pop(context);
+                            go(context, item.value);
+                          },
+                        ),
+                    ],
                     for (final item in navItems.entries.where(
                       (item) =>
                           !signedIn ||
@@ -343,7 +375,9 @@ class SiteShell extends StatelessWidget {
                             title: Text(item.key),
                             selected: route == item.value,
                             selectedColor: deepBlue,
-                            selectedTileColor: softYellow.withValues(alpha: .28),
+                            selectedTileColor: softYellow.withValues(
+                              alpha: .28,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),

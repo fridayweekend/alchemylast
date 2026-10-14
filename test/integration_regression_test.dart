@@ -76,6 +76,10 @@ void main() {
       for (final route in [
         '/',
         '/about',
+        '/coaching',
+        '/upskilling',
+        '/product',
+        '/register',
         '/services',
         '/organizations',
         '/programmes',
@@ -124,6 +128,8 @@ void main() {
           [
             '/admin',
             '/admin/products',
+            '/admin/courses',
+            '/profile',
             '/admin/orders',
             '/admin/quotes',
             '/admin/enquiries',
@@ -147,6 +153,7 @@ void main() {
   ) async {
     auth.signIn('learner@mtalchemy.demo', 'AlchemyLearner!26');
     enrollCourse('ei-fundamentals');
+    completedLessons['ei-fundamentals'] = {for (var i = 0; i < 20; i++) i};
     await tester.pumpWidget(const MtAlchemyApp());
     final navigator = tester.state<NavigatorState>(
       find.byType(Navigator).first,
@@ -155,7 +162,9 @@ void main() {
       MaterialPageRoute<void>(builder: (_) => const LearnerDashboardScreen()),
     );
     await tester.pumpAndSettle();
-    final viewCourse = find.widgetWithText(FilledButton, 'View Course');
+    final viewCourse = find
+        .widgetWithText(FilledButton, 'Continue Course')
+        .first;
     await tester.ensureVisible(viewCourse);
     await tester.tap(viewCourse);
     await tester.pumpAndSettle();
@@ -204,7 +213,7 @@ void main() {
       find.descendant(of: inProgressStat, matching: find.text('0')),
       findsOneWidget,
     );
-    expect(find.text('Course completed!'), findsOneWidget);
+    expect(find.text('Certificates'), findsWidgets);
     await saveProgress();
     selectLearner(null);
     selectLearner('learner@mtalchemy.demo');

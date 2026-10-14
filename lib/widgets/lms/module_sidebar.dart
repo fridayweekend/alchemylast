@@ -102,6 +102,9 @@ class ModuleSidebar extends StatelessWidget {
       );
     }
 
-    return Material(color: Colors.transparent, child: ListView(children: children));
+    return Material(
+      color: Colors.transparent,
+      child: ListView(children: children),
+    );
   }
 }

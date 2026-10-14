@@ -1,3 +1,6 @@
+import 'dart:convert';
+import '../../shared/file_export.dart';
+import '../../shared/learning_navigation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/mock_data.dart';
@@ -19,7 +22,7 @@ const _types = [
 
 /// 5 modules x 4 lessons = 20 lessons, so 13 completed = 65%.
 List<PlayerLesson> _sampleLessons(List<String> titles) => [
-  for (var m = 0; m < 5; m++)
+  for (var m = 0; m < titles.length; m++)
     for (var l = 0; l < 4; l++)
       PlayerLesson(
         moduleIndex: m,
@@ -27,9 +30,7 @@ List<PlayerLesson> _sampleLessons(List<String> titles) => [
         title: 'Lesson ${m + 1}.${l + 1}',
         type: _types[(m * 4 + l) % _types.length],
         body:
-            'Sample content for lesson ${m + 1}.${l + 1}. Emotional '
-            'intelligence is the ability to recognise, understand and manage '
-            'our own emotions, and to respond well to the emotions of others.',
+            '${titles[m]}: reflect on a recent workplace experience. Identify one behaviour you would like to improve, practise it in your next conversation, and record the outcome. Discuss what worked with a colleague and choose one adjustment for next time.',
       ),
 ];
 
@@ -55,9 +56,9 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> {
     _course.id,
     () => {for (var i = 0; i < _startDone; i++) i},
   );
-  late int _current =
-      lastLesson[_course.id] ??
-      _startDone.clamp(0, _lessons.length - 1).toInt();
+  late int _current = (lastLesson[_course.id] ?? _startDone)
+      .clamp(0, _lessons.length - 1)
+      .toInt();
 
   @override
   void dispose() {
@@ -76,12 +77,10 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> {
   void _markComplete() {
     setState(() => _done.add(_current));
     saveProgress();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${_lessons[_current].title} marked complete')),
-    );
   }
 
   void _next() {
+    _markComplete();
     if (_isLast) {
       Navigator.pushNamed(context, '/quiz', arguments: widget.courseId);
     } else {
@@ -105,7 +104,10 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(_course.title)),
+      appBar: AppBar(
+        actions: const [LearningNavigation()],
+        title: Text(_course.title),
+      ),
       drawer: wide ? null : Drawer(child: SafeArea(child: sidebar)),
       body: Row(
         children: [
@@ -145,7 +147,26 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen> {
               border: Border.all(color: deepBlue.withValues(alpha: .08)),
             ),
             child: SingleChildScrollView(
-              child: ContentViewer(lesson: _lessons[_current]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_course.pdfBase64 != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: Text('Download ${_course.pdfName}'),
+                        onPressed: () async {
+                          await saveLocalFile(
+                            _course.pdfName ?? 'course.pdf',
+                            base64Decode(_course.pdfBase64!),
+                          );
+                        },
+                      ),
+                    ),
+                  ContentViewer(lesson: _lessons[_current]),
+                ],
+              ),
             ),
           ),
         ),

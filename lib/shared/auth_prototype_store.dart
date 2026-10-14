@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import '../commerce/commerce_prototype_store.dart';
 import '../data/progress_store.dart';
 import 'package:flutter/foundation.dart';
@@ -89,6 +90,33 @@ class AuthPrototypeStore extends ChangeNotifier {
     selectLearner(_email);
     notifyListeners();
     return true;
+  }
+
+  Future<bool> updateProfile(String name) async {
+    if (_email == null || name.trim().isEmpty) return false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!await prefs.setString('profile_name_$_email', name.trim())) {
+        return false;
+      }
+      _displayName = name.trim();
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> loadProfile() async {
+    final email = _email;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_email != email) return;
+      _displayName = prefs.getString('profile_name_$email') ?? _displayName;
+      notifyListeners();
+    } catch (_) {
+      /* Keep the account name if local storage is unavailable. */
+    }
   }
 
   bool hasRole(String role) => _role == role;

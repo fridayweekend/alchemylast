@@ -1,3 +1,8 @@
+import 'widgets/lms/course_card.dart';
+import 'admin/course_management.dart';
+import 'shared/learning_navigation.dart';
+import 'data/mock_data.dart';
+import 'data/progress_store.dart';
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
@@ -38,6 +43,41 @@ Route<dynamic> buildRoute(RouteSettings settings) {
       settings: const RouteSettings(name: '/login'),
       builder: (_) => signedIn ? SiteShell(route: '/login', child: page) : page,
     );
+  }
+  if (route == '/login' && AuthPrototypeStore.instance.isSignedIn) {
+    return buildRoute(RouteSettings(name: accountDashboard));
+  }
+  if ({
+    '/course-detail',
+    '/course-player',
+    '/enroll',
+    '/quiz',
+    '/certificate',
+  }.contains(route)) {
+    final id = settings.arguments is String
+        ? settings.arguments as String
+        : settings.arguments is Map
+        ? (settings.arguments as Map)['courseId'] as String? ??
+              'ei-fundamentals'
+        : 'ei-fundamentals';
+    final course = mockCourses.where((c) => c.id == id).firstOrNull;
+    if (course == null) {
+      return MaterialPageRoute(
+        builder: (_) => const SiteShell(
+          route: '/hub',
+          child: Padding(
+            padding: EdgeInsets.all(40),
+            child: Text(
+              'This course is no longer available. Browse courses from the menu.',
+            ),
+          ),
+        ),
+      );
+    }
+    if ({'/enroll', '/course-player', '/quiz'}.contains(route) &&
+        !course.prerequisites.every(completedCourses.contains)) {
+      return buildRoute(RouteSettings(name: '/course-detail', arguments: id));
+    }
   }
   final page = switch (route) {
     '/' => const HomePage(),
@@ -126,6 +166,8 @@ Route<dynamic> buildRoute(RouteSettings settings) {
     '/assign-course' => const CourseAssignmentPage(),
     '/reports' => const LearningReportsPage(),
     '/admin' => const AdminDashboardPage(),
+    '/admin/courses' => const CourseManagementPage(),
+    '/profile' => const AccountProfilePage(),
     '/admin/products' => const ProductManagementPage(),
     '/admin/orders' => const OrderManagementPage(),
     '/admin/quotes' => const QuoteManagementPage(),
@@ -158,10 +200,7 @@ Route<dynamic> buildRoute(RouteSettings settings) {
 
 List<String>? _requiredRolesFor(String route) {
   if (route == '/admin' || route.startsWith('/admin/')) return ['Admin'];
-  if (const {
-    '/quote-request',
-    '/quote-confirmation',
-  }.contains(route)) {
+  if (const {'/quote-request', '/quote-confirmation'}.contains(route)) {
     return ['Employer', 'Admin'];
   }
   if (route == '/employer' ||
@@ -176,9 +215,11 @@ List<String>? _requiredRolesFor(String route) {
       route == '/enroll' ||
       route == '/quiz' ||
       route == '/certificate') {
-    return ['Learner'];
+    return ['Learner', 'Employer', 'Trainer', 'Admin'];
   }
-  if (route == '/course-player') return ['Learner', 'Trainer'];
+  if (route == '/profile' || route == '/course-player') {
+    return ['Learner', 'Employer', 'Trainer', 'Admin'];
+  }
   if (const {
     '/checkout',
     '/orders',
@@ -388,25 +429,18 @@ class HomePage extends StatelessWidget {
               'Learn at your own pace.',
               eyebrow: 'Upskilling',
               subtitle:
-                  'Featured course previews connect visitors to the LMS module developed by Member 2.',
+                  'Build workplace skills with guided courses, practical resources and certificates.',
             ),
             ResponsiveGrid(
               children: [
-                _HomeCourseCard(
-                  title: 'Emotional Intelligence Fundamentals',
-                  category: 'Emotional Intelligence',
-                  duration: '4 hours · 5 modules',
-                ),
-                _HomeCourseCard(
-                  title: 'Mindfulness for Everyday Resilience',
-                  category: 'Mindfulness',
-                  duration: '3 hours · 4 modules',
-                ),
-                _HomeCourseCard(
-                  title: 'Communication That Connects',
-                  category: 'Communication',
-                  duration: '5 hours · 6 modules',
-                ),
+                for (final course in mockCourses.take(3))
+                  CourseCard(
+                    course: course,
+                    onViewCourse: () =>
+                        go(context, '/course-detail', arguments: course.id),
+                    onContinueCourse: () =>
+                        go(context, '/course-player', arguments: course.id),
+                  ),
               ],
             ),
             _Callout(
@@ -420,7 +454,7 @@ class HomePage extends StatelessWidget {
               'Tools for everyday practice.',
               eyebrow: 'Store',
               subtitle:
-                  'Selected digital and physical product previews. Purchasing belongs to the Member 3 store module.',
+                  'Explore workbooks, journals and tools that help you put learning into practice.',
             ),
             ResponsiveGrid(
               children: [
@@ -575,50 +609,6 @@ class _ServiceSummary extends StatelessWidget {
       const SizedBox(height: 10),
       Text(item.$3),
     ],
-  );
-}
-
-class _HomeCourseCard extends StatelessWidget {
-  const _HomeCourseCard({
-    required this.title,
-    required this.category,
-    required this.duration,
-  });
-  final String title;
-  final String category;
-  final String duration;
-  @override
-  Widget build(BuildContext context) => InfoCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 110,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [purple, royalBlue]),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.play_circle_outline,
-              color: Colors.white,
-              size: 48,
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        Eyebrow(category),
-        const SizedBox(height: 10),
-        Text(title, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 10),
-        Text('$duration · Beginner'),
-        const SizedBox(height: 16),
-        TextButton(
-          onPressed: () => go(context, '/upskilling'),
-          child: const Text('View course →'),
-        ),
-      ],
-    ),
   );
 }
 
@@ -887,6 +877,16 @@ class ServicesPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        seedCourses[services.indexOf(item)].imageAsset,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     Container(
                       width: 58,
                       height: 58,
@@ -1295,7 +1295,8 @@ class ProgrammesPage extends StatelessWidget {
   const ProgrammesPage({super.key});
   @override
   Widget build(BuildContext context) {
-    final canViewCorporate = AuthPrototypeStore.instance.isSignedIn &&
+    final canViewCorporate =
+        AuthPrototypeStore.instance.isSignedIn &&
         const {'Employer', 'Admin'}.contains(AuthPrototypeStore.instance.role);
     final programmes = [
       (
@@ -1498,84 +1499,87 @@ class ProgrammesPage extends StatelessWidget {
             ),
             ResponsiveGrid(
               children: [
-              for (final p in programmes)
-                InfoCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Eyebrow('Corporate programme'),
-                      const SizedBox(height: 12),
-                      Text(p.$1, style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 10),
-                      Text(p.$7),
-                      const SizedBox(height: 16),
-                      _Meta(icon: Icons.people_outline, text: p.$2),
-                      const _Meta(
-                        icon: Icons.groups_outlined,
-                        text: 'Recommended group: 15-30 participants',
-                      ),
-                      _Meta(icon: Icons.schedule_outlined, text: p.$3),
-                      _Meta(icon: Icons.location_on_outlined, text: p.$4),
-                      const _Meta(
-                        icon: Icons.person_outline,
-                        text: 'Trainer: Mabel Tan KH',
-                      ),
-                      const Divider(height: 30),
-                      const Text(
-                        'Learning objectives',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 10),
-                      for (final objective in p.$5)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 7),
-                          child: Text('• $objective'),
+                for (final p in programmes)
+                  InfoCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Eyebrow('Corporate programme'),
+                        const SizedBox(height: 12),
+                        Text(
+                          p.$1,
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Modules',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 10),
-                      for (var index = 0; index < p.$6.length; index++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 7),
-                          child: Text('Module ${index + 1}: ${p.$6[index]}'),
+                        const SizedBox(height: 10),
+                        Text(p.$7),
+                        const SizedBox(height: 16),
+                        _Meta(icon: Icons.people_outline, text: p.$2),
+                        const _Meta(
+                          icon: Icons.groups_outlined,
+                          text: 'Recommended group: 15-30 participants',
                         ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        'Price: Request a quote',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: purple,
+                        _Meta(icon: Icons.schedule_outlined, text: p.$3),
+                        _Meta(icon: Icons.location_on_outlined, text: p.$4),
+                        const _Meta(
+                          icon: Icons.person_outline,
+                          text: 'Trainer: Mabel Tan KH',
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          FilledButton(
-                            onPressed: () => go(context, '/quote-request'),
-                            child: const Text('Request a quote'),
+                        const Divider(height: 30),
+                        const Text(
+                          'Learning objectives',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 10),
+                        for (final objective in p.$5)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 7),
+                            child: Text('• $objective'),
                           ),
-                          OutlinedButton.icon(
-                            onPressed: () =>
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Brochure download is represented in this UI prototype.',
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Modules',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 10),
+                        for (var index = 0; index < p.$6.length; index++)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 7),
+                            child: Text('Module ${index + 1}: ${p.$6[index]}'),
+                          ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Price: Request a quote',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: purple,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            FilledButton(
+                              onPressed: () => go(context, '/quote-request'),
+                              child: const Text('Request a quote'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Brochure download is represented in this UI prototype.',
+                                      ),
                                     ),
                                   ),
-                                ),
-                            icon: const Icon(Icons.download_outlined),
-                            label: const Text('Brochure'),
-                          ),
-                        ],
-                      ),
-                    ],
+                              icon: const Icon(Icons.download_outlined),
+                              label: const Text('Brochure'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ],

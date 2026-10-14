@@ -1,3 +1,4 @@
+import '../../shared/learning_navigation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/mock_data.dart';
@@ -15,9 +16,15 @@ class CourseDetailScreen extends StatelessWidget {
       orElse: () => mockCourses.first,
     );
     final enrolled = enrolledCourses.contains(course.id);
+    final missing = course.prerequisites
+        .where((id) => !completedCourses.contains(id))
+        .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Course Detail')),
+      appBar: AppBar(
+        actions: const [LearningNavigation()],
+        title: const Text('Course Detail'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -26,6 +33,46 @@ class CourseDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.asset(
+                    course.imageAsset,
+                    height: 240,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (missing.isNotEmpty)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Complete these prerequisites first',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          for (final id in missing)
+                            TextButton.icon(
+                              icon: const Icon(Icons.lock_outline),
+                              label: Text(
+                                mockCourses.firstWhere((c) => c.id == id).title,
+                              ),
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                '/course-detail',
+                                arguments: id,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(32),
@@ -164,13 +211,15 @@ class CourseDetailScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        enrolled ? '/course-player' : '/enroll',
-                        arguments: course.id,
-                      );
-                    },
+                    onPressed: missing.isNotEmpty
+                        ? null
+                        : () {
+                            Navigator.pushNamed(
+                              context,
+                              enrolled ? '/course-player' : '/enroll',
+                              arguments: course.id,
+                            );
+                          },
                     icon: Icon(
                       enrolled
                           ? Icons.play_circle_outline
