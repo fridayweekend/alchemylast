@@ -228,8 +228,9 @@ Future<void> saveCourseCatalogue(List<Course> courses) async {
   bool cycle(String id, Set<String> visiting) {
     if (!visiting.add(id)) return true;
     for (final prerequisite in byId[id]!.prerequisites) {
-      if (!byId.containsKey(prerequisite) || cycle(prerequisite, {...visiting}))
+      if (!byId.containsKey(prerequisite) || cycle(prerequisite, {...visiting})) {
         return true;
+      }
     }
     return false;
   }
