@@ -3,7 +3,6 @@ name: Deploy Flutter web to GitHub Pages
 on:
   push:
     branches:
-      - main
       - update-mt-alchemy
   workflow_dispatch:
 
@@ -38,6 +37,7 @@ jobs:
           path: build/web
 
   deploy:
+    if: github.ref == 'refs/heads/update-mt-alchemy'
     needs: build
     runs-on: ubuntu-latest
     environment:
